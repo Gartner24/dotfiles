@@ -1,0 +1,39 @@
+#!/usr/bin/env bash
+set -e
+
+echo "Installing dependencies..."
+sudo apt update
+sudo apt install -y git curl zsh tmux fonts-powerline
+
+echo "Cloning dotfiles repo with submodules..."
+if [ ! -d "$HOME/dotfiles" ]; then
+  git clone --recurse-submodules https://github.com/Gartner24/dotfiles.git "$HOME/dotfiles"
+else
+  echo "Dotfiles repo already exists at $HOME/dotfiles"
+fi
+
+cd "$HOME/dotfiles"
+
+echo "Installing Oh My Zsh..."
+if [ ! -d "$HOME/.oh-my-zsh" ]; then
+  sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
+
+else
+  echo "Oh My Zsh already installed."
+fi
+
+echo "Installing Zsh plugins..."
+ZSH_CUSTOM="${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}"
+git clone https://github.com/zsh-users/zsh-autosuggestions "$ZSH_CUSTOM/plugins/zsh-autosuggestions" || true
+git clone https://github.com/zsh-users/zsh-syntax-highlighting.git "$ZSH_CUSTOM/plugins/zsh-syntax-highlighting" || true
+git clone https://github.com/zsh-users/zsh-completions "$ZSH_CUSTOM/plugins/zsh-completions" || true
+
+echo "Creating symlinks..."
+ln -sf "$HOME/dotfiles/.zshrc" "$HOME/.zshrc"
+ln -sf "$HOME/dotfiles/.tmux.conf" "$HOME/.tmux.conf"
+mkdir -p "$HOME/.config"
+ln -sfn "$HOME/dotfiles/.config/nvim" "$HOME/.config/nvim"
+
+echo "Installation complete!"
+echo "Restart your shell or run: exec zsh"
+
