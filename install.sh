@@ -1,36 +1,52 @@
 #!/usr/bin/env bash
 set -e
 
-echo "Installing dependencies..."
-sudo apt update
-sudo apt install -y git curl zsh tmux neovim fonts-powerline
+# --sync / -s: skip installs, only update submodules and create symlinks
+SYNC_ONLY=false
+for arg in "$@"; do
+  case "$arg" in --sync|-s) SYNC_ONLY=true ;; esac
+done
 
-echo "Cloning dotfiles repo with submodules..."
-if [ ! -d "$HOME/dotfiles" ]; then
-  git clone --recurse-submodules https://github.com/Gartner24/dotfiles.git "$HOME/dotfiles"
+if [ "$SYNC_ONLY" = true ]; then
+  [ -d "$HOME/dotfiles" ] || { echo "Error: ~/dotfiles not found. Run full install first."; exit 1; }
+  echo "Sync mode: updating submodules and symlinks only."
 else
-  echo "Dotfiles repo already exists at $HOME/dotfiles"
+  echo "Installing dependencies..."
+  sudo apt update
+  sudo apt install -y git curl zsh tmux neovim fonts-powerline
+
+  echo "Cloning dotfiles repo with submodules..."
+  if [ ! -d "$HOME/dotfiles" ]; then
+    git clone --recurse-submodules https://github.com/Gartner24/dotfiles.git "$HOME/dotfiles"
+  else
+    echo "Dotfiles repo already exists at $HOME/dotfiles"
+  fi
 fi
 
 cd "$HOME/dotfiles"
 
+if [ "$SYNC_ONLY" = true ]; then
+  git pull
+fi
+
 echo "Initializing submodules..."
 git submodule update --init --recursive
 
-echo "Installing Oh My Zsh..."
-if [ ! -d "$HOME/.oh-my-zsh" ]; then
-  sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
+if [ "$SYNC_ONLY" = false ]; then
+  echo "Installing Oh My Zsh..."
+  if [ ! -d "$HOME/.oh-my-zsh" ]; then
+    sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
+  else
+    echo "Oh My Zsh already installed."
+  fi
 
-else
-  echo "Oh My Zsh already installed."
+  echo "Installing Zsh plugins and theme..."
+  ZSH_CUSTOM="${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}"
+  git clone --depth=1 https://github.com/romkatv/powerlevel10k.git "$ZSH_CUSTOM/themes/powerlevel10k" || true
+  git clone https://github.com/zsh-users/zsh-autosuggestions "$ZSH_CUSTOM/plugins/zsh-autosuggestions" || true
+  git clone https://github.com/zsh-users/zsh-syntax-highlighting.git "$ZSH_CUSTOM/plugins/zsh-syntax-highlighting" || true
+  git clone https://github.com/zsh-users/zsh-completions "$ZSH_CUSTOM/plugins/zsh-completions" || true
 fi
-
-echo "Installing Zsh plugins and theme..."
-ZSH_CUSTOM="${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}"
-git clone --depth=1 https://github.com/romkatv/powerlevel10k.git "$ZSH_CUSTOM/themes/powerlevel10k" || true
-git clone https://github.com/zsh-users/zsh-autosuggestions "$ZSH_CUSTOM/plugins/zsh-autosuggestions" || true
-git clone https://github.com/zsh-users/zsh-syntax-highlighting.git "$ZSH_CUSTOM/plugins/zsh-syntax-highlighting" || true
-git clone https://github.com/zsh-users/zsh-completions "$ZSH_CUSTOM/plugins/zsh-completions" || true
 
 echo "Creating symlinks..."
 ln -sf "$HOME/dotfiles/.zshrc" "$HOME/.zshrc"
