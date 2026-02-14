@@ -3,7 +3,7 @@ set -e
 
 echo "Installing dependencies..."
 sudo apt update
-sudo apt install -y git curl zsh tmux fonts-powerline
+sudo apt install -y git curl zsh tmux neovim fonts-powerline
 
 echo "Cloning dotfiles repo with submodules..."
 if [ ! -d "$HOME/dotfiles" ]; then
@@ -14,6 +14,9 @@ fi
 
 cd "$HOME/dotfiles"
 
+echo "Initializing submodules..."
+git submodule update --init --recursive
+
 echo "Installing Oh My Zsh..."
 if [ ! -d "$HOME/.oh-my-zsh" ]; then
   sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
@@ -22,8 +25,9 @@ else
   echo "Oh My Zsh already installed."
 fi
 
-echo "Installing Zsh plugins..."
+echo "Installing Zsh plugins and theme..."
 ZSH_CUSTOM="${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}"
+git clone --depth=1 https://github.com/romkatv/powerlevel10k.git "$ZSH_CUSTOM/themes/powerlevel10k" || true
 git clone https://github.com/zsh-users/zsh-autosuggestions "$ZSH_CUSTOM/plugins/zsh-autosuggestions" || true
 git clone https://github.com/zsh-users/zsh-syntax-highlighting.git "$ZSH_CUSTOM/plugins/zsh-syntax-highlighting" || true
 git clone https://github.com/zsh-users/zsh-completions "$ZSH_CUSTOM/plugins/zsh-completions" || true
