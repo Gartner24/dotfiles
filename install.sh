@@ -2,14 +2,9 @@
 set -e
 
 # --sync / -s: skip installs, only update submodules and create symlinks
-# --force: overwrite ~/.config/nvim even if it looks like a real config (use with caution)
 SYNC_ONLY=false
-FORCE=false
 for arg in "$@"; do
-  case "$arg" in
-    --sync|-s) SYNC_ONLY=true ;;
-    --force|-f) FORCE=true ;;
-  esac
+  case "$arg" in --sync|-s) SYNC_ONLY=true ;; esac
 done
 
 if [ "$SYNC_ONLY" = true ]; then
@@ -58,18 +53,15 @@ ln -sf "$HOME/dotfiles/.zshrc" "$HOME/.zshrc"
 ln -sf "$HOME/dotfiles/.tmux.conf" "$HOME/.tmux.conf"
 mkdir -p "$HOME/.config"
 
-# CRITICAL: If ~/.config/nvim exists as a directory, ln creates the link *inside* it
-# (e.g. ~/.config/nvim/nvim) instead of replacing it. Remove the dir first.
-# Safety: don't rm a dir that looks like a real config (init.lua at top) unless --force
-if [ -d "$HOME/.config/nvim" ] && [ ! -L "$HOME/.config/nvim" ]; then
-  if [ -f "$HOME/.config/nvim/init.lua" ] && [ "$FORCE" != true ]; then
-    echo "Error: ~/.config/nvim looks like a real config (has init.lua). Refusing to overwrite."
-    echo "If this is your dotfiles-managed machine, use: ./install.sh --force"
-    exit 1
-  fi
-  rm -rf "$HOME/.config/nvim"
+# Nvim: clone if missing, otherwise just git pull (no overwriting)
+if [ ! -d "$HOME/.config/nvim/.git" ]; then
+  [ -d "$HOME/.config/nvim" ] && { echo "Error: ~/.config/nvim exists but is not a git repo. Refusing to overwrite."; exit 1; }
+  echo "Cloning nvim config..."
+  git clone https://github.com/Gartner24/nvim.lua.git "$HOME/.config/nvim"
+else
+  echo "Updating nvim config..."
+  (cd "$HOME/.config/nvim" && git fetch && git pull)
 fi
-ln -sfn "$HOME/dotfiles/.config/nvim" "$HOME/.config/nvim"
 
 echo "Installation complete!"
 echo "Restart your shell or run: exec zsh"
