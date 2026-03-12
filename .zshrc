@@ -126,6 +126,20 @@ source $ZSH/oh-my-zsh.sh
 # alias zshconfig="mate ~/.zshrc"
 # alias ohmyzsh="mate ~/.oh-my-zsh"
 
+# bat alias
+alias cat='bat'
+
+# eza aliases
+alias ls='eza'
+alias ll='eza --long'
+alias la='eza --long --all'
+alias lt='eza --icons --tree --level=2'
+alias ltd='eza --icons --tree --level=2 --only-dirs'
+
+# btop
+alias top='btop'
+alias htop='btop'
+
 # To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
 [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
 
@@ -133,6 +147,40 @@ source $ZSH/oh-my-zsh.sh
 export PATH="$PATH:$HOME/.local/bin"
 
 export NVM_DIR="$HOME/.nvm"
-[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
-[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
-export PATH=$HOME/.local/bin:$PATH
+nvm() {
+  unset -f nvm
+  [ -s "$NVM_DIR/nvm.sh" ] && source "$NVM_DIR/nvm.sh"
+  nvm "$@"
+}
+
+alias figma="figma-linux --enable-features=UseOzonePlatform --ozone-platform=wayland"
+
+export QSYS_ROOTDIR="/home/santiago/altera_lite/25.1std/quartus/sopc_builder/bin"
+
+# Added by Quartus Prime software
+export SALT_LICENSE_FILE="$SALT_LICENSE_FILE;/home/santiago/.altera.quartus/questa_lic.dat"
+export PATH=$PATH:~/altera_lite/25.1std/quartus/bin
+
+eval "$(zoxide init zsh)"
+alias cd='z'
+
+fastfetch
+echo -e "
+\e[33m ╔════════════════════════════════════════╗\e[0m
+\e[33m ║  \e[32m⚡ Quick Reference                     \e[33m║\e[0m
+\e[33m ╠════════════════════════════════════════╣\e[0m
+\e[33m ║  \e[34m Navigation                            \e[33m║\e[0m
+\e[33m ║  \e[0mz  <name>   → jump to directory        \e[33m║\e[0m
+\e[33m ║  \e[0mzi          → fuzzy pick directory      \e[33m║\e[0m
+\e[33m ╠════════════════════════════════════════╣\e[0m
+\e[33m ║  \e[34m Listing                               \e[33m║\e[0m
+\e[33m ║  \e[0mls          → simple list               \e[33m║\e[0m
+\e[33m ║  \e[0mll          → detailed list             \e[33m║\e[0m
+\e[33m ║  \e[0mla          → list all + hidden         \e[33m║\e[0m
+\e[33m ║  \e[0mlt          → tree view                 \e[33m║\e[0m
+\e[33m ║  \e[0mltd         → tree dirs only            \e[33m║\e[0m
+\e[33m ╠════════════════════════════════════════╣\e[0m
+\e[33m ║  \e[34m System                                \e[33m║\e[0m
+\e[33m ║  \e[0mtop         → btop monitor              \e[33m║\e[0m
+\e[33m ║  \e[0mcat <file>  → bat with highlighting     \e[33m║\e[0m
+\e[33m ╚════════════════════════════════════════╝\e[0m"

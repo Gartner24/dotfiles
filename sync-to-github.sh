@@ -1,23 +1,53 @@
 #!/usr/bin/env bash
-# Sync zsh/tmux configs from $HOME into dotfiles and push to GitHub.
-# Neovim is managed separately: push from ~/.config/nvim to its own repo.
+# Sync configs from $HOME into dotfiles repo and push to GitHub.
+# Neovim is managed separately via its own repo.
 set -e
 
 DOTFILES="$HOME/dotfiles"
+TIMESTAMP=$(date '+%Y-%m-%d %H:%M')
+CHANGED=()
 
-echo "Syncing configs into dotfiles..."
-cp "$HOME/.zshrc" "$DOTFILES/.zshrc"
-cp "$HOME/.tmux.conf" "$DOTFILES/.tmux.conf"
+# ── Colors ────────────────────────────────────────────────────────────────────
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+RED='\033[0;31m'
+CYAN='\033[0;36m'
+RESET='\033[0m'
 
+info()    { echo -e "${CYAN}  →${RESET} $1"; }
+success() { echo -e "${GREEN}  ✔${RESET} $1"; }
+warn()    { echo -e "${YELLOW}  ⚠${RESET} $1"; }
+error()   { echo -e "${RED}  ✘${RESET} $1"; exit 1; }
+
+echo -e "\n${YELLOW}╔══════════════════════════════════════╗"
+echo -e "║       Dotfiles Sync to GitHub        ║"
+echo -e "╚══════════════════════════════════════╝${RESET}\n"
+
+[ -d "$DOTFILES" ] || error "Dotfiles directory not found at $DOTFILES"
+
+# ── Commit & push ─────────────────────────────────────────────────────────
 cd "$DOTFILES"
 
-if git diff --quiet .zshrc .tmux.conf 2>/dev/null; then
-  echo "No changes to commit."
+git add .
+
+# Check if there's anything staged
+if git diff --cached --quiet; then
+  warn "Nothing changed — nothing to commit."
+  echo ""
   exit 0
 fi
 
-git add .zshrc .tmux.conf
-git commit -m "Sync zsh and tmux configs"
+# Get list of changed files for commit message
+CHANGED=$(git diff --cached --name-only | tr '\n' ' ')
+
+info "Staged: $CHANGED"
+
+COMMIT_MSG="sync: ${CHANGED% } — $TIMESTAMP"
+git commit -m "$COMMIT_MSG"
+
+info "Pushing to GitHub..."
 git push
 
-echo "Done. Pushed to GitHub."
+echo ""
+success "Done! Pushed: $CHANGED"
+echo ""
