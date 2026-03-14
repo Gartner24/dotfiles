@@ -25,9 +25,16 @@ echo -e "╚══════════════════════�
 
 [ -d "$DOTFILES" ] || error "Dotfiles directory not found at $DOTFILES"
 
-# ── Commit & push ─────────────────────────────────────────────────────────
+# ── Copy real configs from $HOME into repo ─────────────────────────────────
 cd "$DOTFILES"
 
+# Use cat to avoid "same file" when $HOME configs are symlinks into this repo
+cat "$HOME/.zshrc" > .zshrc
+cat "$HOME/.tmux.conf" > .tmux.conf
+mkdir -p .config/alacritty
+cat "$HOME/.config/alacritty/alacritty.toml" > .config/alacritty/alacritty.toml
+
+# ── Commit & push ─────────────────────────────────────────────────────────
 git add .
 
 # Check if there's anything staged

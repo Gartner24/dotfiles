@@ -114,6 +114,12 @@ background = "0x1d2021"
 foreground = "0xa89984"
 
 # ── Keybindings ───────────────────────────────────────────────────────────────
+# Ctrl+Space: send NUL (0x00) so nvim-cmp completion works (terminals often send space instead)
+[[keyboard.bindings]]
+key    = "Space"
+mods   = "Control"
+chars  = "\u0000"
+
 [[keyboard.bindings]]
 key    = "PageUp"
 mods   = "Shift"
