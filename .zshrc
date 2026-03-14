@@ -133,8 +133,8 @@ alias cat='bat'
 alias ls='eza'
 alias ll='eza --long'
 alias la='eza --long --all'
-alias lt='eza --icons --tree --level=2'
-alias ltd='eza --icons --tree --level=2 --only-dirs'
+alias lt='eza --icons --tree --level=2 --ignore-glob="node_modules|.git|dist|.next|.cache"'
+alias ltd='eza --icons --tree --level=2 --only-dirs --ignore-glob="node_modules|.git|dist|.next|.cache"'
 
 # btop
 alias top='btop'
@@ -147,11 +147,8 @@ alias htop='btop'
 export PATH="$PATH:$HOME/.local/bin"
 
 export NVM_DIR="$HOME/.nvm"
-nvm() {
-  unset -f nvm
-  [ -s "$NVM_DIR/nvm.sh" ] && source "$NVM_DIR/nvm.sh"
-  nvm "$@"
-}
+[ -s "$NVM_DIR/nvm.sh" ] && source "$NVM_DIR/nvm.sh"
+[ -s "$NVM_DIR/bash_completion" ] && source "$NVM_DIR/bash_completion"
 
 alias figma="figma-linux --enable-features=UseOzonePlatform --ozone-platform=wayland"
 
@@ -163,6 +160,7 @@ export PATH=$PATH:~/altera_lite/25.1std/quartus/bin
 
 eval "$(zoxide init zsh)"
 alias cd='z'
+alias freeram='sudo sync && echo 3 | sudo tee /proc/sys/vm/drop_caches && echo "RAM cache cleared!"'
 
 fastfetch
 echo -e "
@@ -183,4 +181,5 @@ echo -e "
 \e[33m ║  \e[34m System                                \e[33m║\e[0m
 \e[33m ║  \e[0mtop         → btop monitor              \e[33m║\e[0m
 \e[33m ║  \e[0mcat <file>  → bat with highlighting     \e[33m║\e[0m
+\e[33m ║  \e[0mfreeram     → Clears ram cache          \e[33m║\e[0m
 \e[33m ╚════════════════════════════════════════╝\e[0m"
