@@ -139,6 +139,7 @@ alias ltd='eza --icons --tree --level=2 --only-dirs --ignore-glob="node_modules|
 # btop
 alias top='btop'
 alias htop='btop'
+alias zed='zeditor'
 
 # To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
 [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
@@ -183,3 +184,4 @@ echo -e "
 \e[33m ║  \e[0mcat <file>  → bat with highlighting     \e[33m║\e[0m
 \e[33m ║  \e[0mfreeram     → Clears ram cache          \e[33m║\e[0m
 \e[33m ╚════════════════════════════════════════╝\e[0m"
+export GDK_SCALE=1.8
