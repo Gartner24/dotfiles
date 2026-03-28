@@ -5,7 +5,6 @@ set -e
 
 DOTFILES="$HOME/dotfiles"
 TIMESTAMP=$(date '+%Y-%m-%d %H:%M')
-CHANGED=()
 
 # ── Colors ────────────────────────────────────────────────────────────────────
 GREEN='\033[0;32m'
@@ -25,28 +24,41 @@ echo -e "╚══════════════════════�
 
 [ -d "$DOTFILES" ] || error "Dotfiles directory not found at $DOTFILES"
 
-# ── Copy real configs from $HOME into repo ─────────────────────────────────
+# ── Copy real configs from $HOME into repo ────────────────────────────────────
+copy_config() {
+  local src="$1"
+  local dest="$2"
+  local real_src
+  real_src=$(realpath "$src" 2>/dev/null) || { warn "Source not found: $src — skipping."; return; }
+  local real_dest
+  real_dest=$(realpath "$DOTFILES/$dest" 2>/dev/null || echo "$DOTFILES/$dest")
+
+  if [ "$real_src" = "$real_dest" ]; then
+    info "Skipping $dest (symlink points to repo — already in sync)"
+    return
+  fi
+
+  mkdir -p "$(dirname "$DOTFILES/$dest")"
+  cp "$real_src" "$DOTFILES/$dest"
+  success "Copied $dest"
+}
+
 cd "$DOTFILES"
 
-# Use cat to avoid "same file" when $HOME configs are symlinks into this repo
-cat "$HOME/.zshrc" > .zshrc
-cat "$HOME/.tmux.conf" > .tmux.conf
-mkdir -p .config/alacritty
-cat "$HOME/.config/alacritty/alacritty.toml" > .config/alacritty/alacritty.toml
+copy_config "$HOME/.zshrc"                          ".zshrc"
+copy_config "$HOME/.tmux.conf"                      ".tmux.conf"
+copy_config "$HOME/.config/alacritty/alacritty.toml" ".config/alacritty/alacritty.toml"
 
-# ── Commit & push ─────────────────────────────────────────────────────────
+# ── Commit & push ─────────────────────────────────────────────────────────────
 git add .
 
-# Check if there's anything staged
 if git diff --cached --quiet; then
   warn "Nothing changed — nothing to commit."
   echo ""
   exit 0
 fi
 
-# Get list of changed files for commit message
 CHANGED=$(git diff --cached --name-only | tr '\n' ' ')
-
 info "Staged: $CHANGED"
 
 COMMIT_MSG="sync: ${CHANGED% } — $TIMESTAMP"
