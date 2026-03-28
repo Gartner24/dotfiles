@@ -70,7 +70,18 @@ install_dependencies() {
     ubuntu|debian)
       info "Installing Ubuntu packages..."
       sudo apt update
-      sudo apt install -y git curl zsh tmux neovim bat btop zoxide fzf docker.io docker-compose openssh-server unzip
+      sudo apt install -y git curl zsh tmux bat btop zoxide fzf docker.io docker-compose openssh-server unzip
+
+      # Neovim via PPA (apt version is too old, need 0.8+)
+      if ! command -v nvim &>/dev/null || [ "$(nvim --version | head -1 | grep -oP '\d+\.\d+' | head -1 | cut -d. -f2)" -lt 8 ]; then
+        info "Installing Neovim from PPA..."
+        sudo add-apt-repository ppa:neovim-ppa/unstable -y
+        sudo apt update
+        sudo apt install -y neovim
+      else
+        info "Neovim already up to date."
+      fi
+
 
       # eza (not in apt)
       if ! command -v eza &>/dev/null; then
