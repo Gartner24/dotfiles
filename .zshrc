@@ -27,9 +27,6 @@ export NVM_DIR="$HOME/.nvm"
 # ── mise ──────────────────────────────────────────────────────────────────────
 command -v mise &>/dev/null && eval "$(mise activate zsh)"
 
-# ── zoxide ────────────────────────────────────────────────────────────────────
-command -v zoxide &>/dev/null && eval "$(zoxide init zsh)"
-
 # ── Aliases — always ──────────────────────────────────────────────────────────
 alias cat='bat'
 alias ls='eza'
@@ -66,10 +63,6 @@ echo -e "
 \e[33m ╔══════════════════════════════════════════════╗\e[0m
 \e[33m ║  \e[32m⚡ Quick Reference                           \e[33m║\e[0m
 \e[33m ╠══════════════════════════════════════════════╣\e[0m
-\e[33m ║  \e[34m Navigation                                  \e[33m║\e[0m
-\e[33m ║  \e[0mz  <name>        → jump to directory          \e[33m║\e[0m
-\e[33m ║  \e[0mzi               → fuzzy pick directory       \e[33m║\e[0m
-\e[33m ╠══════════════════════════════════════════════╣\e[0m
 \e[33m ║  \e[34m Listing                                     \e[33m║\e[0m
 \e[33m ║  \e[0mls               → simple list                \e[33m║\e[0m
 \e[33m ║  \e[0mll               → detailed list              \e[33m║\e[0m
@@ -82,13 +75,19 @@ echo -e "
 \e[33m ║  \e[0mcat <file>       → bat with highlighting      \e[33m║\e[0m
 \e[33m ║  \e[0mfreeram          → clear RAM cache            \e[33m║\e[0m
 \e[33m ╠══════════════════════════════════════════════╣\e[0m
-\e[33m ║  \e[34m Dev                                         \e[33m║\e[0m
-\e[33m ║  \e[0mnvm use <ver>    → switch Node version        \e[33m║\e[0m
-\e[33m ║  \e[0mmise use <tool>  → switch runtime version     \e[33m║\e[0m
-\e[33m ║  \e[0mdocker ps        → list containers            \e[33m║\e[0m
-\e[33m ╠══════════════════════════════════════════════╣\e[0m
 \e[33m ║  \e[34m GUI only                                    \e[33m║\e[0m
 \e[33m ║  \e[0mexplorer <path>  → open file manager          \e[33m║\e[0m
-\e[33m ║  \e[0mzed              → Zed editor                 \e[33m║\e[0m
-\e[33m ║  \e[0mfigma            → Figma Linux                \e[33m║\e[0m
 \e[33m ╚══════════════════════════════════════════════╝\e[0m"
+
+# bun completions
+[ -s "/home/santiago/.bun/_bun" ] && source "/home/santiago/.bun/_bun"
+
+# bun
+export BUN_INSTALL="$HOME/.bun"
+export PATH="$BUN_INSTALL/bin:$PATH"
+
+alias claude-mem='/home/santiago/.bun/bin/bun "/home/santiago/.claude/plugins/marketplaces/thedotmack/plugin/scripts/worker-service.cjs"'
+
+# ── zoxide ────────────────────────────────────────────────────────────────────
+export _ZO_DOCTOR=0
+command -v zoxide &>/dev/null && eval "$(zoxide init zsh)"
