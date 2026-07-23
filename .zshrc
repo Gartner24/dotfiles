@@ -91,3 +91,38 @@ alias claude-mem='/home/santiago/.bun/bin/bun "/home/santiago/.claude/plugins/ma
 # ── zoxide ────────────────────────────────────────────────────────────────────
 export _ZO_DOCTOR=0
 command -v zoxide &>/dev/null && eval "$(zoxide init zsh)"
+export PATH="$HOME/.cargo/bin:$PATH"
+
+# Chrome for lighthouse / chrome-launcher (no system Chrome installed; use Playwright's cached Chromium).
+# Globs the newest chromium-* so a Playwright version bump won't break this. ponytail: pin a real path if the glob ever misfires.
+export CHROME_PATH="$(ls -d "$HOME"/.cache/ms-playwright/chromium-*/chrome-linux64/chrome 2>/dev/null | sort -V | tail -1)"
+
+# ── System maintenance ────────────────────────────────────────────────────────
+# fixall: one-shot cleanup - prune orphans, clean caches, report broken packages.
+# Run `yay -Syu` yourself first; this handles the tidy-up afterward. Safe and
+# repeatable. Does NOT remove apps or big one-off packages (cuda, unused GUIs);
+# those stay manual decisions.
+if [ -f /etc/arch-release ]; then
+  fixall() {
+    echo ":: [1/4] Removing orphaned packages..."
+    # zsh does not word-split unquoted vars: ${(f)...} splits Qtdq output on newlines into an array.
+    local -a orphans=(${(f)"$(pacman -Qtdq 2>/dev/null)"})
+    if (( ${#orphans} )); then
+      sudo pacman -Rns "${orphans[@]}"
+    else
+      echo "   none"
+    fi
+
+    echo ":: [2/4] Cleaning package cache (yay -Sc)..."
+    yay -Sc --noconfirm
+
+    echo ":: [3/4] Clearing leftover download scraps..."
+    sudo rm -f /var/cache/pacman/pkg/download-* /var/cache/pacman/pkg/*.part 2>/dev/null
+    echo "   done"
+
+    echo ":: [4/4] Broken-package check..."
+    pacman -Qk 2>/dev/null | grep -iE 'missing|warning' | grep -v '0 missing files' || echo "   none broken"
+
+    echo ":: fixall complete."
+  }
+fi
