@@ -19,12 +19,7 @@ source $ZSH/oh-my-zsh.sh
 # ── PATH ──────────────────────────────────────────────────────────────────────
 export PATH="$PATH:$HOME/.local/bin"
 
-# ── NVM ───────────────────────────────────────────────────────────────────────
-export NVM_DIR="$HOME/.nvm"
-[ -s "$NVM_DIR/nvm.sh" ] && source "$NVM_DIR/nvm.sh"
-[ -s "$NVM_DIR/bash_completion" ] && source "$NVM_DIR/bash_completion"
-
-# ── mise ──────────────────────────────────────────────────────────────────────
+# ── mise (node, go, just, rust) ───────────────────────────────────────────────
 command -v mise &>/dev/null && eval "$(mise activate zsh)"
 
 # ── Aliases — always ──────────────────────────────────────────────────────────
@@ -37,7 +32,14 @@ alias ltd='eza --icons --tree --level=2 --only-dirs --ignore-glob="node_modules|
 alias top='btop'
 alias htop='btop'
 alias cd='z'
-alias freeram='sudo sync && echo 3 | sudo tee /proc/sys/vm/drop_caches && echo "RAM cache cleared!"'
+# freeram: sync + drop caches, showing before/after. Note: Linux uses free RAM as
+# cache on purpose and reclaims it automatically - the "available" column is your
+# real free memory. This is mostly cosmetic; useful only for benchmarking cold reads.
+freeram() {
+  echo "before:"; free -h | grep -E 'Mem|Swap'
+  sudo sync && echo 3 | sudo tee /proc/sys/vm/drop_caches >/dev/null
+  echo "after:";  free -h | grep -E 'Mem|Swap'
+}
 
 # ── Aliases — GUI only ────────────────────────────────────────────────────────
 if [ -n "$DISPLAY" ] || [ -n "$WAYLAND_DISPLAY" ]; then
@@ -57,27 +59,8 @@ fi
 [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
 
 # ── Startup ───────────────────────────────────────────────────────────────────
-command -v fastfetch &>/dev/null && fastfetch
-
-echo -e "
-\e[33m ╔══════════════════════════════════════════════╗\e[0m
-\e[33m ║  \e[32m⚡ Quick Reference                           \e[33m║\e[0m
-\e[33m ╠══════════════════════════════════════════════╣\e[0m
-\e[33m ║  \e[34m Listing                                     \e[33m║\e[0m
-\e[33m ║  \e[0mls               → simple list                \e[33m║\e[0m
-\e[33m ║  \e[0mll               → detailed list              \e[33m║\e[0m
-\e[33m ║  \e[0mla               → list all + hidden          \e[33m║\e[0m
-\e[33m ║  \e[0mlt               → tree view (no noise)       \e[33m║\e[0m
-\e[33m ║  \e[0mltd              → tree dirs only             \e[33m║\e[0m
-\e[33m ╠══════════════════════════════════════════════╣\e[0m
-\e[33m ║  \e[34m System                                      \e[33m║\e[0m
-\e[33m ║  \e[0mtop              → btop monitor               \e[33m║\e[0m
-\e[33m ║  \e[0mcat <file>       → bat with highlighting      \e[33m║\e[0m
-\e[33m ║  \e[0mfreeram          → clear RAM cache            \e[33m║\e[0m
-\e[33m ╠══════════════════════════════════════════════╣\e[0m
-\e[33m ║  \e[34m GUI only                                    \e[33m║\e[0m
-\e[33m ║  \e[0mexplorer <path>  → open file manager          \e[33m║\e[0m
-\e[33m ╚══════════════════════════════════════════════╝\e[0m"
+# Only on a fresh terminal (SHLVL 1), not in splits/subshells.
+[[ $SHLVL -eq 1 ]] && command -v fastfetch &>/dev/null && fastfetch
 
 # bun completions
 [ -s "/home/santiago/.bun/_bun" ] && source "/home/santiago/.bun/_bun"
