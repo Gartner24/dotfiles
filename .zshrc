@@ -63,6 +63,18 @@ fi
 # Only on a fresh terminal (SHLVL 1), not in splits/subshells.
 [[ $SHLVL -eq 1 ]] && command -v fastfetch &>/dev/null && fastfetch
 
+# Random tldr tip on a fresh terminal - learn one command per session.
+_tldr_tip() {
+  command -v tldr &>/dev/null || return
+  local pages pick
+  pages=("${(@f)$(tldr --list 2>/dev/null)}")
+  (( ${#pages} )) || return
+  pick=${pages[RANDOM % ${#pages} + 1]}
+  print -P "%F{yellow}💡 tip - tldr $pick%f"
+  tldr "$pick" 2>/dev/null
+}
+[[ $SHLVL -eq 1 ]] && _tldr_tip
+
 # bun completions
 [ -s "/home/santiago/.bun/_bun" ] && source "/home/santiago/.bun/_bun"
 
@@ -80,6 +92,19 @@ export PATH="$HOME/.cargo/bin:$PATH"
 # Chrome for lighthouse / chrome-launcher (no system Chrome installed; use Playwright's cached Chromium).
 # Globs the newest chromium-* so a Playwright version bump won't break this. ponytail: pin a real path if the glob ever misfires.
 export CHROME_PATH="$(ls -d "$HOME"/.cache/ms-playwright/chromium-*/chrome-linux64/chrome 2>/dev/null | sort -V | tail -1)"
+
+# ── fzf (fuzzy finder) ────────────────────────────────────────────────────────
+# Ctrl+R fuzzy history, Ctrl+T file picker, Alt+C fuzzy cd. Backed by fd when present.
+if command -v fzf &>/dev/null; then
+  if command -v fd &>/dev/null; then
+    export FZF_DEFAULT_COMMAND='fd --type f --hidden --exclude .git'
+    export FZF_CTRL_T_COMMAND="$FZF_DEFAULT_COMMAND"
+    export FZF_ALT_C_COMMAND='fd --type d --hidden --exclude .git'
+  fi
+  export FZF_DEFAULT_OPTS='--height 40% --layout=reverse --border'
+  [ -f /usr/share/fzf/key-bindings.zsh ] && source /usr/share/fzf/key-bindings.zsh
+  [ -f /usr/share/fzf/completion.zsh ]   && source /usr/share/fzf/completion.zsh
+fi
 
 # ── System maintenance ────────────────────────────────────────────────────────
 # fixall: one-shot cleanup - prune orphans, clean caches, report broken packages.
