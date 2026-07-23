@@ -63,6 +63,16 @@ fi
 # Only on a fresh terminal (SHLVL 1), not in splits/subshells.
 [[ $SHLVL -eq 1 ]] && command -v fastfetch &>/dev/null && fastfetch
 
+# Shortcuts panel - the tools I keep forgetting.
+_shortcuts() {
+  print -P "%F{yellow}⚡ shortcuts%f"
+  print -P "  %F{cyan}Ctrl+R%f  fuzzy history search      %F{cyan}fd%f NAME   fast file find"
+  print -P "  %F{cyan}Ctrl+T%f  insert a file path        %F{cyan}yazi%f      terminal file manager"
+  print -P "  %F{cyan}Alt+C%f   fuzzy cd into a dir       %F{cyan}tldr%f CMD  command examples"
+  print -P "  %F{cyan}fixall%f  system cleanup            %F{cyan}freeram%f   ram usage before/after"
+}
+[[ $SHLVL -eq 1 ]] && _shortcuts
+
 # Random tldr tip on a fresh terminal - learn one command per session.
 _tldr_tip() {
   command -v tldr &>/dev/null || return
