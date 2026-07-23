@@ -35,6 +35,7 @@ alias cd='z'
 # freeram: sync + drop caches, showing before/after. Note: Linux uses free RAM as
 # cache on purpose and reclaims it automatically - the "available" column is your
 # real free memory. This is mostly cosmetic; useful only for benchmarking cold reads.
+unalias freeram 2>/dev/null   # avoid alias/function clash when re-sourcing
 freeram() {
   echo "before:"; free -h | grep -E 'Mem|Swap'
   sudo sync && echo 3 | sudo tee /proc/sys/vm/drop_caches >/dev/null
