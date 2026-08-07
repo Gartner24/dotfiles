@@ -60,8 +60,11 @@ fi
 [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
 
 # ── Startup ───────────────────────────────────────────────────────────────────
-# Only on a fresh terminal (SHLVL 1), not in splits/subshells.
-[[ $SHLVL -eq 1 ]] && command -v fastfetch &>/dev/null && fastfetch
+# Fresh terminal OR new tmux window/pane, but not a manually nested shell.
+# SHLVL breaks under tmux (server bumps it), so gate on the parent process:
+# a pane's top shell is spawned by tmux/alacritty; a subshell by another shell.
+_is_top_shell() { [[ $(ps -o comm= -p $PPID 2>/dev/null) != (zsh|bash|sh|-zsh|-bash) ]] }
+_is_top_shell && command -v fastfetch &>/dev/null && fastfetch
 
 # Shortcuts panel - the tools I keep forgetting.
 _shortcuts() {
@@ -70,8 +73,9 @@ _shortcuts() {
   print -P "  %F{cyan}Ctrl+T%f  insert a file path        %F{cyan}yazi%f      terminal file manager"
   print -P "  %F{cyan}Alt+C%f   fuzzy cd into a dir       %F{cyan}tldr%f CMD  command examples"
   print -P "  %F{cyan}fixall%f  system cleanup            %F{cyan}freeram%f   ram usage before/after"
+  print -P "  %F{cyan}up%f      update everything         %F{cyan}flatpak update%f  flatpaks only"
 }
-[[ $SHLVL -eq 1 ]] && _shortcuts
+_is_top_shell && _shortcuts
 
 # Random tldr tip on a fresh terminal - learn one command per session.
 _tldr_tip() {
@@ -83,7 +87,7 @@ _tldr_tip() {
   print -P "%F{yellow}💡 tip - tldr $pick%f"
   tldr "$pick" 2>/dev/null
 }
-[[ $SHLVL -eq 1 ]] && _tldr_tip
+_is_top_shell && _tldr_tip
 
 # bun completions
 [ -s "/home/santiago/.bun/_bun" ] && source "/home/santiago/.bun/_bun"
@@ -145,3 +149,22 @@ if [ -f /etc/arch-release ]; then
     echo ":: fixall complete."
   }
 fi
+
+# up: update both package systems. yay only knows pacman + AUR - it is blind to
+# flatpaks, which live in their own repos. Discover used to surface both; it was
+# removed 2026-08-07, so this covers the gap.
+# No `&&` between the two: answering "n" to yay's confirm exits non-zero, and
+# that must not skip the flatpak half.
+up() {
+  echo ":: [1/2] pacman + AUR (yay -Syu)..."
+  yay -Syu "$@"
+
+  if command -v flatpak &>/dev/null; then
+    echo ":: [2/2] flatpak..."
+    flatpak update
+  else
+    echo ":: [2/2] flatpak not installed - skipped"
+  fi
+
+  echo ":: up complete."
+}
