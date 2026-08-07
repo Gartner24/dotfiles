@@ -19,6 +19,17 @@ source $ZSH/oh-my-zsh.sh
 # ── PATH ──────────────────────────────────────────────────────────────────────
 export PATH="$PATH:$HOME/.local/bin"
 
+# ── Telemetry opt-out ─────────────────────────────────────────────────────────
+# DO_NOT_TRACK is a convention (consoledonottrack.com), honoured by a growing
+# number of CLI tools - not a guarantee. The rest are tool-specific and only
+# listed because that tool is actually installed here:
+#   astro  - 12 projects   next - 1 project   sam - aws-sam-cli via pipx
+# GUI apps (Discord, Zoom, Spotify, Telegram) ignore all of these.
+export DO_NOT_TRACK=1
+export ASTRO_TELEMETRY_DISABLED=1
+export NEXT_TELEMETRY_DISABLED=1
+export SAM_CLI_TELEMETRY=0
+
 # ── mise (node, go, just, rust) ───────────────────────────────────────────────
 command -v mise &>/dev/null && eval "$(mise activate zsh)"
 
