@@ -63,7 +63,7 @@ install_dependencies() {
       # GUI-only packages
       if [ "$HAS_GUI" = true ]; then
         info "Installing GUI packages..."
-        yay -S --noconfirm ttf-hack-nerd alacritty
+        yay -S --noconfirm ttf-hack-nerd alacritty ghostty
       fi
       ;;
 
@@ -187,10 +187,11 @@ info "Creating symlinks..."
 ln -sf "$HOME/dotfiles/.zshrc"   "$HOME/.zshrc"
 ln -sf "$HOME/dotfiles/.tmux.conf" "$HOME/.tmux.conf"
 
-# Alacritty only on GUI
+# Terminal configs only on GUI
 if [ "$HAS_GUI" = true ]; then
-  mkdir -p "$HOME/.config/alacritty"
+  mkdir -p "$HOME/.config/alacritty" "$HOME/.config/ghostty"
   ln -sf "$HOME/dotfiles/.config/alacritty/alacritty.toml" "$HOME/.config/alacritty/alacritty.toml"
+  ln -sf "$HOME/dotfiles/.config/ghostty/config" "$HOME/.config/ghostty/config"
 fi
 
 # ── Neovim ────────────────────────────────────────────────────────────────────

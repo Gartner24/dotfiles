@@ -48,6 +48,7 @@ cd "$DOTFILES"
 copy_config "$HOME/.zshrc"                          ".zshrc"
 copy_config "$HOME/.tmux.conf"                      ".tmux.conf"
 copy_config "$HOME/.config/alacritty/alacritty.toml" ".config/alacritty/alacritty.toml"
+copy_config "$HOME/.config/ghostty/config"          ".config/ghostty/config"
 
 # ── Commit & push ─────────────────────────────────────────────────────────────
 git add .

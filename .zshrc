@@ -19,13 +19,33 @@ source $ZSH/oh-my-zsh.sh
 # ── PATH ──────────────────────────────────────────────────────────────────────
 export PATH="$PATH:$HOME/.local/bin"
 
+# ── Editor ────────────────────────────────────────────────────────────────────
+# yazi's default opener runs `${EDITOR:-vi}`, and this box has no vi or vim -
+# only nvim. With EDITOR unset, Enter on a text/code file in yazi ran a missing
+# binary and looked like nothing happened. nvim is blocking, so yazi hides,
+# nvim takes the terminal, and quitting nvim drops you back on the same file.
+export EDITOR=nvim
+export VISUAL=nvim
+
+# ── yazi ──────────────────────────────────────────────────────────────────────
+# `y` instead of `yazi`: on quit, the shell cds to wherever yazi ended up.
+# Plain `yazi` still works and leaves the shell where it was.
+function y() {
+	local tmp cwd
+	tmp="$(mktemp -t "yazi-cwd.XXXXXX")"
+	command yazi "$@" --cwd-file="$tmp"
+	IFS= read -r -d '' cwd < "$tmp"
+	[ "$cwd" != "$PWD" ] && [ -d "$cwd" ] && builtin cd -- "$cwd" || builtin true
+	command rm -f -- "$tmp"
+}
+
 # ── Telemetry opt-out ─────────────────────────────────────────────────────────
 # DO_NOT_TRACK is a convention (consoledonottrack.com), honoured by a growing
 # number of CLI tools - not a guarantee. The rest are tool-specific and only
 # listed because that tool is actually installed here:
 #   astro  - 12 projects   next - 1 project   sam - aws-sam-cli via pipx
 # GUI apps (Discord, Zoom, Spotify, Telegram) ignore all of these.
-export DO_NOT_TRACK=1
+export DO_NOT_TRACK=0
 export ASTRO_TELEMETRY_DISABLED=1
 export NEXT_TELEMETRY_DISABLED=1
 export SAM_CLI_TELEMETRY=0
@@ -67,13 +87,30 @@ if [ -f /etc/arch-release ]; then
   export PATH=$PATH:~/altera_lite/25.1std/quartus/bin
 fi
 
+# ── Terminal emulator ─────────────────────────────────────────────────────────
+# TERM_EMULATOR = ghostty | alacritty | other, for per-terminal tweaks.
+# Inside tmux $TERM is tmux's own, so ask tmux what the attached client runs in.
+# Alacritty without its terminfo reports xterm-256color: fall back to its env var.
+_term_emulator() {
+  local t=$TERM
+  [[ -n $TMUX ]] && t=$(tmux display -p '#{client_termname}' 2>/dev/null)
+  case $t in
+    xterm-ghostty) echo ghostty ;;
+    alacritty)     echo alacritty ;;
+    *) if   [[ -n $GHOSTTY_RESOURCES_DIR ]]; then echo ghostty
+       elif [[ -n $ALACRITTY_WINDOW_ID ]];   then echo alacritty
+       else echo other; fi ;;
+  esac
+}
+export TERM_EMULATOR=$(_term_emulator)
+
 # ── p10k ──────────────────────────────────────────────────────────────────────
 [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
 
 # ── Startup ───────────────────────────────────────────────────────────────────
 # Fresh terminal OR new tmux window/pane, but not a manually nested shell.
 # SHLVL breaks under tmux (server bumps it), so gate on the parent process:
-# a pane's top shell is spawned by tmux/alacritty; a subshell by another shell.
+# a pane's top shell is spawned by tmux or the terminal; a subshell by another shell.
 _is_top_shell() { [[ $(ps -o comm= -p $PPID 2>/dev/null) != (zsh|bash|sh|-zsh|-bash) ]] }
 _is_top_shell && command -v fastfetch &>/dev/null && fastfetch
 
@@ -85,6 +122,7 @@ _shortcuts() {
   print -P "  %F{cyan}Alt+C%f   fuzzy cd into a dir       %F{cyan}tldr%f CMD  command examples"
   print -P "  %F{cyan}fixall%f  system cleanup            %F{cyan}freeram%f   ram usage before/after"
   print -P "  %F{cyan}up%f      update everything         %F{cyan}flatpak update%f  flatpaks only"
+  print -P "  %F{cyan}nosleep%f screen stays on, no sleep %F{cyan}nosleep off%f  back to normal"
 }
 _is_top_shell && _shortcuts
 
@@ -179,3 +217,83 @@ up() {
 
   echo ":: up complete."
 }
+
+# ── Sleep control ─────────────────────────────────────────────────────────────
+# nosleep       - screen never blanks, machine never idle-suspends
+# nosleep off   - back to KDE's normal timeouts
+# nosleep status
+#
+# Two inhibitors nested, because they cover different things:
+#   systemd-inhibit --what=idle:sleep  -> logind, blocks auto-suspend
+#   kde-inhibit --power --screenSaver  -> KWin, blocks screen blank + lock screen
+# The logind one alone was tried first and the screen still went black - logind
+# has no concept of the display. Nesting keeps it to one process to kill;
+# killing the outer reaps the whole tree.
+#
+# Lasts until 'nosleep off', logout, or reboot. Closing the LID still suspends -
+# handle-lid-switch is left alone so a bagged laptop cannot cook itself.
+# pgrep/pkill use -x (whole-cmdline match) so a shell that merely has this
+# string in its argv is not a target.
+_NOSLEEP_CMD="systemd-inhibit --what=idle:sleep --who=nosleep --why=long-running-session kde-inhibit --power --screenSaver sleep infinity"
+nosleep() {
+  case "$1" in
+    off|stop)
+      pkill -xf "$_NOSLEEP_CMD" \
+        && echo "sleep + screen blanking re-enabled" \
+        || echo "nosleep was not active"
+      ;;
+    status)
+      pgrep -xf "$_NOSLEEP_CMD" >/dev/null \
+        && echo "nosleep ACTIVE - screen stays on, no idle suspend" \
+        || echo "normal - KDE timeouts apply"
+      ;;
+    ""|on|start)
+      if pgrep -xf "$_NOSLEEP_CMD" >/dev/null; then
+        echo "nosleep already active"
+        return
+      fi
+      command -v kde-inhibit >/dev/null || {
+        echo "nosleep: kde-inhibit not found (install plasma-workspace)" >&2
+        return 1
+      }
+      setsid ${=_NOSLEEP_CMD} >/dev/null 2>&1 </dev/null &
+      disown
+      sleep 0.3
+      pgrep -xf "$_NOSLEEP_CMD" >/dev/null \
+        && echo "nosleep ACTIVE - 'nosleep off' to undo" \
+        || { echo "nosleep failed to start" >&2; return 1 }
+      ;;
+    *)
+      echo "usage: nosleep [on|off|status]" >&2
+      return 1
+      ;;
+  esac
+}
+
+# ── claude-fb: Claude Code on Ollama Cloud, for when the Claude usage limit is hit ──
+# Uses the normal ~/.claude config (hooks, plugins, MCP, jjstack, sessions); only the provider env differs.
+# Needs: ollama installed, `ollama signin` done, ollama service running.
+# Resume the capped session with: claude-fb --resume
+claude-fb() {
+  # fb-safe = Ollama Cloud -> Groq (no training on prompts). fb-any also falls back to Gemini free
+  # and Mistral free, which train on / review prompts: never for client code. Set CLAUDE_FB_MODEL=fb-any.
+  local m="${CLAUDE_FB_MODEL:-fb-safe}" k
+  k=$(sed -n 's/^LITELLM_MASTER_KEY=//p' "$HOME/.config/claude-fb/keys.env")
+  if ! curl -s -m 1 http://127.0.0.1:4000/health/liveliness >/dev/null; then
+    ( setsid nohup "$HOME/.local/share/claude-fb/start-proxy.sh" >"$HOME/.local/state/claude-fb/litellm.log" 2>&1 & )
+    for _ in {1..40}; do curl -s -m 1 http://127.0.0.1:4000/health/liveliness >/dev/null && break; sleep 0.5; done
+  fi
+  CLAUDE_PROVIDER_LABEL="$m" \
+  CLAUDE_CODE_EFFORT_LEVEL="${CLAUDE_FB_EFFORT:-high}" \
+  ANTHROPIC_BASE_URL="http://127.0.0.1:4000" \
+  ANTHROPIC_AUTH_TOKEN="$k" \
+  ANTHROPIC_API_KEY="" \
+  ANTHROPIC_DEFAULT_OPUS_MODEL="$m" \
+  ANTHROPIC_DEFAULT_SONNET_MODEL="$m" \
+  ANTHROPIC_DEFAULT_HAIKU_MODEL="$m" \
+  CLAUDE_CODE_SUBAGENT_MODEL="$m" \
+  command claude --model "$m" "$@"
+}
+
+# opencode
+export PATH=/home/santiago/.opencode/bin:$PATH
