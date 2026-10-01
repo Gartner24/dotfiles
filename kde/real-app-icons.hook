@@ -1,0 +1,15 @@
+# Rebuild the Papirus-Dark-Real icon theme after packages add or remove app icons,
+# so new apps show their real logo. Runs real-app-icons as each user that has it.
+# Install: sudo install -Dm644 ~/dotfiles/kde/real-app-icons.hook /etc/pacman.d/hooks/real-app-icons.hook
+[Trigger]
+Operation = Install
+Operation = Upgrade
+Operation = Remove
+Type = Path
+Target = usr/share/icons/hicolor/*
+Target = usr/share/icons/breeze-dark/apps/*
+
+[Action]
+Description = Refreshing real app logos (Papirus-Dark-Real)...
+When = PostTransaction
+Exec = /bin/sh -c 'for s in /home/*/.local/bin/real-app-icons; do [ -x "$s" ] && runuser -u "$(stat -c %U "$s")" -- "$s" >/dev/null; done; true'

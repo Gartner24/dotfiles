@@ -1,0 +1,14 @@
+{
+    "KPackageStructure": "Plasma/Applet",
+    "KPlugin": {
+        "Authors": [{ "Name": "santiago" }],
+        "Category": "Windows and Tasks",
+        "Description": "Icons-only dock with macOS-style hover magnification",
+        "Icon": "preferences-system-windows",
+        "Id": "org.santiago.macdock",
+        "License": "GPL-2.0+",
+        "Name": "Mac Dock",
+        "Version": "1.0"
+    },
+    "X-Plasma-API-Minimum-Version": "6.0"
+}

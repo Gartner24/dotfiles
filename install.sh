@@ -192,6 +192,14 @@ if [ "$HAS_GUI" = true ]; then
   mkdir -p "$HOME/.config/alacritty" "$HOME/.config/ghostty"
   ln -sf "$HOME/dotfiles/.config/alacritty/alacritty.toml" "$HOME/.config/alacritty/alacritty.toml"
   ln -sf "$HOME/dotfiles/.config/ghostty/config" "$HOME/.config/ghostty/config"
+
+  # KDE: Mac Dock widget + real-app-logos icon theme builder (and its pacman hook on Arch)
+  mkdir -p "$HOME/.local/share/plasma/plasmoids" "$HOME/.local/bin"
+  ln -sfn "$HOME/dotfiles/.local/share/plasma/plasmoids/org.santiago.macdock" "$HOME/.local/share/plasma/plasmoids/org.santiago.macdock"
+  ln -sf "$HOME/dotfiles/.local/bin/real-app-icons" "$HOME/.local/bin/real-app-icons"
+  if [ "$OS" = arch ]; then
+    sudo install -Dm644 "$HOME/dotfiles/kde/real-app-icons.hook" /etc/pacman.d/hooks/real-app-icons.hook
+  fi
 fi
 
 # ── Neovim ────────────────────────────────────────────────────────────────────

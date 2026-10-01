@@ -1,0 +1,55 @@
+#!/bin/bash
+# Builds the Papirus-Dark-Real icon theme: Papirus-Dark for system icons, but every app keeps the
+# logo it ships in hicolor. Re-run after installing new apps (only symlinks, safe to repeat).
+set -e
+T=$HOME/.local/share/icons/Papirus-Dark-Real
+SOURCES=(
+  /usr/share/icons/hicolor
+  /var/lib/flatpak/exports/share/icons/hicolor
+  $HOME/.local/share/flatpak/exports/share/icons/hicolor
+  $HOME/.local/share/icons/hicolor
+)
+
+find "$T" -mindepth 1 -maxdepth 1 -type d -exec rm -r {} +
+dirs=()
+# KDE apps ship their real logo in breeze (layout apps/<size>), not hicolor; linked first so hicolor wins on clashes
+for n in 16 22 24 32 48 64; do
+  mkdir -p "$T/${n}x${n}/apps"
+  for f in /usr/share/icons/breeze-dark/apps/$n/*; do ln -sf "$f" "$T/${n}x${n}/apps/"; done
+  dirs+=("${n}x${n}/apps")
+done
+for src in "${SOURCES[@]}"; do
+  [ -d "$src" ] || continue
+  for d in "$src"/*/apps; do
+    [ -d "$d" ] || continue
+    size=$(basename "$(dirname "$d")")
+    mkdir -p "$T/$size/apps"
+    # later sources (user, flatpak) win over system ones
+    for f in "$d"/*; do ln -sf "$f" "$T/$size/apps/"; done
+    [[ " ${dirs[*]} " == *" $size/apps "* ]] || dirs+=("$size/apps")
+  done
+done
+
+{
+  echo "[Icon Theme]"
+  echo "Name=Papirus Dark (real app logos)"
+  echo "Comment=Papirus-Dark for system icons; apps keep their own logos"
+  echo "Inherits=Papirus-Dark,breeze-dark,hicolor"
+  echo "Directories=$(IFS=,; echo "${dirs[*]}")"
+  for d in "${dirs[@]}"; do
+    size=${d%%/*}
+    echo
+    echo "[$d]"
+    echo "Context=Applications"
+    if [ "$size" = scalable ] || [ "$size" = symbolic ]; then
+      echo "Size=128"; echo "MinSize=8"; echo "MaxSize=512"; echo "Type=Scalable"
+    else
+      px=${size%%x*}; px=${px%%@*}
+      echo "Size=$px"; echo "Type=Threshold"
+      [[ "$size" == *@2 ]] && echo "Scale=2"
+    fi
+  done
+} > "$T/index.theme"
+
+gtk-update-icon-cache -f -q "$T" 2>/dev/null || true
+echo "Papirus-Dark-Real: ${#dirs[@]} dirs, $(find "$T" -type l | wc -l) app icons"
