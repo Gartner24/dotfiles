@@ -29,7 +29,7 @@ _These are recommendations to keep your build orderly, not requirements. Skip an
 | 1 | Repo layout and linking method | Foundation | in-progress |
 | 2 | Program inventory | Foundation | done |
 | 3 | zsh through the new layout | Slice 1 | done |
-| 13 | Server profile | Slice 1 | planned |
+| 13 | Server profile | Slice 1 | in-progress |
 | 14 | Starship prompt | Slice 1 | done |
 | 4 | Terminals and editor | Slice 2 | done |
 | 5 | Personal scripts | Slice 3 | done |
@@ -94,10 +94,18 @@ Spec: [0001](../specs/0001-repo-layout-linking/index.md), code in `home/zsh/`
 - [x] Build it: `/develop zsh through the new layout`
 - [x] Verify it: `/check verify zsh through the new layout`
 
-### 13. Server profile (needs a decision)
+### 13. Server profile · in-progress
 A lean profile for VPS, VDS and headless servers: a fast zsh with no GUI configs, no fastfetch, no startup tips or shortcut panels, no tmux, and the same scripts installing only server items.
 **Done when:** a dry run on a server installs only server items, a new shell there starts noticeably faster than on the desktop (measured with hyperfine), and nothing GUI related is linked.
-- [ ] Design it (spec): `/architect server profile`
+Arch, Debian 12+ and Ubuntu 22.04+. Package installing itself is built by feature 10 from the spec's mapping table.
+Spec: [0003](../specs/0003-server-profile.md), code in `home/zsh/`, `home/zsh-desktop/`, `profiles/desktop`, `tests/server-profile.sh`
+- [x] Design it (spec): `/architect server profile`
+- [ ] Build it: `/develop server profile`
+  - [ ] zsh split into `zsh-desktop`, desktop unchanged (AC-2, AC-12)
+  - [ ] Server shell path: distro plugins, sparse git aliases, guarded aliases, Debian names, `freeram` and `up` (AC-3, AC-4, AC-5, AC-6)
+  - [ ] Container test on six images with the startup ratio (AC-1, AC-7, AC-8, AC-11)
+  - [ ] Mapping table verified with `apt-cache policy`, mise fallback check (AC-9, AC-10)
+- [ ] Verify it: `/check verify server profile`
 
 ### 14. Starship prompt · done
 Try Starship in place of Powerlevel10k on both profiles, keeping the p10k config around until you decide.
