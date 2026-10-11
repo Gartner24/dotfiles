@@ -1,0 +1,48 @@
+#!/bin/sh
+# Centered "zen" margins for a single-pane tmux window (20% per side).
+# Usage: tmux-zen toggle | auto [window] | split -h|-v DIR
+#   toggle: Z key; turning it off opts the window out of auto until toggled back on
+#   auto:   hooks; turn on if the window has one pane and is not opted out
+#   split:  drop margins, then split
+mode=${1:-toggle}
+w=
+[ "$mode" = auto ] && w=$2
+T=${w:+-t $w}
+pads=$(tmux list-panes $T -F '#{pane_id} #{@zen}' 2>/dev/null | awk '$2==1{print $1}')
+
+off() {
+  for p in $pads; do tmux kill-pane -t "$p"; done
+  [ -n "$pads" ] && tmux set -wu $T pane-border-lines
+}
+
+on() {
+  n=$(tmux display -p $T '#{window_panes}' 2>/dev/null) || return 0
+  if [ -n "$pads" ]; then
+    # content pane exited and only the margins are left
+    [ "$(echo $pads | wc -w)" = "$n" ] && tmux kill-window $T
+    return 0
+  fi
+  [ "$n" = 1 ] || return 0
+  m=$(( $(tmux display -p $T '#{window_width}') * 20 / 100 ))
+  for side in -b ""; do
+    p=$(tmux split-window $T -dhf $side -P -F '#{pane_id}' 'sleep infinity')
+    tmux set -p -t "$p" @zen 1
+    pads="$pads $p"
+  done
+  for p in $pads; do tmux resize-pane -t "$p" -x "$m"; done
+  tmux set -w $T pane-border-lines spaces
+}
+
+case $mode in
+  toggle)
+    if [ -n "$pads" ]; then tmux set -w @zen_off 1; off
+    else tmux set -wu @zen_off; on; fi ;;
+  auto)
+    [ -n "$(tmux show -wv $T @zen_off 2>/dev/null)" ] ||
+      [ -n "$(tmux show -wv $T @zen_busy 2>/dev/null)" ] || on ;;
+  split)
+    # busy stops the kill-pane hook from re-adding margins before the split lands
+    tmux set -w @zen_busy 1; off
+    tmux split-window "$2" -c "$3"
+    tmux set -wu @zen_busy ;;
+esac

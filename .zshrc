@@ -5,10 +5,12 @@ fi
 
 # ── History ───────────────────────────────────────────────────────────────────
 HISTFILE=~/.zsh_history
-HISTSIZE=10000
-SAVEHIST=10000
+HISTSIZE=100000
+SAVEHIST=100000
 setopt APPEND_HISTORY INC_APPEND_HISTORY SHARE_HISTORY
 setopt HIST_IGNORE_ALL_DUPS HIST_SAVE_NO_DUPS HIST_REDUCE_BLANKS
+# start a command with a space to keep it out of history (keys, tokens)
+setopt HIST_IGNORE_SPACE
 
 # ── Oh My Zsh ─────────────────────────────────────────────────────────────────
 export ZSH="$HOME/.oh-my-zsh"
@@ -45,6 +47,7 @@ function y() {
 # listed because that tool is actually installed here:
 #   astro  - 12 projects   next - 1 project   sam - aws-sam-cli via pipx
 # GUI apps (Discord, Zoom, Spotify, Telegram) ignore all of these.
+# Left at 0 on purpose: 1 switched off Claude remote control and other app features.
 export DO_NOT_TRACK=0
 export ASTRO_TELEMETRY_DISABLED=1
 export NEXT_TELEMETRY_DISABLED=1
@@ -63,15 +66,48 @@ alias ltd='eza --icons --tree --level=2 --only-dirs --ignore-glob="node_modules|
 alias top='btop'
 alias htop='btop'
 alias cd='z'
-# freeram: sync + drop caches, showing before/after. Note: Linux uses free RAM as
-# cache on purpose and reclaims it automatically - the "available" column is your
-# real free memory. This is mostly cosmetic; useful only for benchmarking cold reads.
+# freeram: drop caches, empty swap when RAM can hold it, show top memory users and
+# offer to close Claude sessions open more than a day. The "available" column is
+# your real free memory; dropping caches alone is mostly cosmetic.
 unalias freeram 2>/dev/null   # avoid alias/function clash when re-sourcing
 freeram() {
   echo "before:"; free -h | grep -E 'Mem|Swap'
   sudo sync && echo 3 | sudo tee /proc/sys/vm/drop_caches >/dev/null
-  echo "after:";  free -h | grep -E 'Mem|Swap'
+
+  # empty swap only if RAM can hold it all plus 1 GB margin, otherwise swapoff itself can freeze
+  local avail=$(awk '/MemAvailable/ {print $2}' /proc/meminfo)
+  local swapused=$(awk '/SwapTotal/ {t=$2} /SwapFree/ {f=$2} END {print t-f}' /proc/meminfo)
+  if (( swapused > 0 && avail > swapused + 1048576 )); then
+    echo "moving swap back to RAM..."; sudo swapoff -a && sudo swapon -a
+  elif (( swapused > 0 )); then
+    echo "swap kept: not enough free RAM to empty it safely"
+  fi
+  echo "after:"; free -h | grep -E 'Mem|Swap'
+
+  echo "\ntop memory users:"
+  ps -eo rss,comm --no-headers | awk '{m[$2]+=$1} END {for (p in m) printf "%7.0f MB  %s\n", m[p]/1024, p}' | sort -rn | head -10
+
+  # Claude sessions open more than a day keep all their MCP servers alive
+  local stale=(${(f)"$(ps -eo pid,etimes,comm,args --no-headers | awk '$3=="claude" && $2>86400 && !/--chrome-native-host/ {print $1}')"})
+  (( ${#stale} )) || return 0
+  echo "\nClaude sessions open more than a day:"
+  local p
+  for p in $stale; do
+    printf "  %-8s %-12s %s\n" $p "$(ps -o etime= -p $p | tr -d ' ')" "$(readlink /proc/$p/cwd)"
+  done
+  read -q "?Close them? [y/N] " && kill $stale
+  echo
 }
+
+# clipclear [SECONDS]: wipe the clipboard and Klipper's history, now or after a delay.
+# After copying a key from a website: `clipclear 30`, paste it, and it is gone in 30s.
+clipclear() {
+  ( sleep ${1:-0}; wl-copy --clear; qdbus6 org.kde.klipper /klipper org.kde.klipper.klipper.clearClipboardHistory >/dev/null ) &!
+  (( ${1:-0} )) && echo "clipboard clears in ${1}s" || echo "clipboard cleared"
+}
+# copykey: copy piped text as a secret - Klipper skips it, and it clears after one paste.
+#   cat key.txt | copykey
+copykey() { wl-copy --sensitive --paste-once }
 
 # ── Aliases — GUI only ────────────────────────────────────────────────────────
 if [ -n "$DISPLAY" ] || [ -n "$WAYLAND_DISPLAY" ]; then
@@ -106,6 +142,8 @@ export TERM_EMULATOR=$(_term_emulator)
 
 # ── p10k ──────────────────────────────────────────────────────────────────────
 [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
+# OSC 133 prompt marks: lets tmux jump between prompts (Ctrl+Shift+PgUp/PgDn)
+typeset -g POWERLEVEL9K_TERM_SHELL_INTEGRATION=true
 
 # ── Startup ───────────────────────────────────────────────────────────────────
 # Fresh terminal OR new tmux window/pane, but not a manually nested shell.
@@ -120,9 +158,10 @@ _shortcuts() {
   print -P "  %F{cyan}Ctrl+R%f  fuzzy history search      %F{cyan}fd%f NAME   fast file find"
   print -P "  %F{cyan}Ctrl+T%f  insert a file path        %F{cyan}yazi%f      terminal file manager"
   print -P "  %F{cyan}Alt+C%f   fuzzy cd into a dir       %F{cyan}tldr%f CMD  command examples"
-  print -P "  %F{cyan}fixall%f  system cleanup            %F{cyan}freeram%f   ram usage before/after"
+  print -P "  %F{cyan}fixall%f  system cleanup            %F{cyan}freeram%f   free ram, close old claude sessions"
   print -P "  %F{cyan}up%f      update everything         %F{cyan}flatpak update%f  flatpaks only"
   print -P "  %F{cyan}nosleep%f screen stays on, no sleep %F{cyan}nosleep off%f  back to normal"
+  print -P "  %F{cyan}clipclear%f [s] wipe clipboard        %F{cyan}copykey%f   copy a secret, one paste"
 }
 _is_top_shell && _shortcuts
 
@@ -176,7 +215,7 @@ fi
 # those stay manual decisions.
 if [ -f /etc/arch-release ]; then
   fixall() {
-    echo ":: [1/4] Removing orphaned packages..."
+    echo ":: [1/5] Removing orphaned packages..."
     # zsh does not word-split unquoted vars: ${(f)...} splits Qtdq output on newlines into an array.
     local -a orphans=(${(f)"$(pacman -Qtdq 2>/dev/null)"})
     if (( ${#orphans} )); then
@@ -185,19 +224,57 @@ if [ -f /etc/arch-release ]; then
       echo "   none"
     fi
 
-    echo ":: [2/4] Cleaning package cache (yay -Sc)..."
+    echo ":: [2/5] Cleaning package cache (yay -Sc)..."
     yay -Sc --noconfirm
 
-    echo ":: [3/4] Clearing leftover download scraps..."
+    echo ":: [3/5] Clearing leftover download scraps..."
     sudo rm -f /var/cache/pacman/pkg/download-* /var/cache/pacman/pkg/*.part 2>/dev/null
     echo "   done"
 
-    echo ":: [4/4] Broken-package check..."
+    echo ":: [4/5] Broken-package check..."
     pacman -Qk 2>/dev/null | grep -iE 'missing|warning' | grep -v '0 missing files' || echo "   none broken"
+
+    echo ":: [5/6] Dead git worktrees..."
+    wtclean
+
+    echo ":: [6/6] Trimming system journal to 500M..."
+    sudo journalctl --vacuum-size=500M
 
     echo ":: fixall complete."
   }
 fi
+
+# wtclean: remove git worktrees under ~/projects that are dead - clean AND either
+# no commits beyond origin's default branch, or HEAD is exactly a merged PR's head.
+# Branches are kept, only the folders go. Asks before removing; dirty, open-PR,
+# unpushed or closed-unmerged ones are listed and left alone.
+wtclean() {
+  local repo wt br def ahead prhead
+  local -a dead keep
+  for repo in ~/projects/*/*(/N); do
+    [ -d "$repo/.git" ] || continue
+    git -C "$repo" worktree prune
+    for wt in ${(f)"$(git -C "$repo" worktree list --porcelain | sed -n 's/^worktree //p' | tail -n +2)"}; do
+      if [ -n "$(git -C "$wt" status --porcelain 2>/dev/null)" ]; then keep+=("$wt  (uncommitted changes)"); continue; fi
+      def=$(git -C "$wt" symbolic-ref --short refs/remotes/origin/HEAD 2>/dev/null || echo origin/main)
+      ahead=$(git -C "$wt" rev-list --count "$def..HEAD" 2>/dev/null)
+      if [ "$ahead" = 0 ]; then dead+=("$wt"); continue; fi
+      br=$(git -C "$wt" branch --show-current)
+      prhead=""
+      [ -n "$br" ] && prhead=$(cd "$wt" && gh pr list --head "$br" --state merged --json headRefOid --jq '.[0].headRefOid // ""' 2>/dev/null)
+      if [ -n "$prhead" ] && [ "$prhead" = "$(git -C "$wt" rev-parse HEAD)" ]; then dead+=("$wt")
+      else keep+=("$wt  ($ahead commits not on $def, no matching merged PR)"); fi
+    done
+  done
+  (( ${#keep} )) && { echo "   kept:"; printf '     %s\n' "${keep[@]}"; }
+  if (( ! ${#dead} )); then echo "   no dead worktrees"; return; fi
+  echo "   dead:"; printf '     %s\n' "${dead[@]}"
+  read -q "?   Remove these ${#dead} worktrees? [y/N] " || { echo; return; }
+  echo
+  for wt in "${dead[@]}"; do
+    git --git-dir="$(git -C "$wt" rev-parse --path-format=absolute --git-common-dir)" worktree remove "$wt" && echo "   removed $wt"
+  done
+}
 
 # up: update both package systems. yay only knows pacman + AUR - it is blind to
 # flatpaks, which live in their own repos. Discover used to surface both; it was
@@ -215,6 +292,8 @@ up() {
     echo ":: [2/2] flatpak not installed - skipped"
   fi
 
+  # a kernel update deletes the running kernel's modules: new USB/wifi devices fail until reboot
+  [[ -d /usr/lib/modules/$(uname -r) ]] || echo ":: kernel updated - reboot soon (new USB/wifi devices may fail until then)"
   echo ":: up complete."
 }
 
