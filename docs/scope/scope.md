@@ -119,13 +119,15 @@ Spec: [0001](../specs/0001-repo-layout-linking/index.md) (AC-11, AC-12), code in
 ### 5. Personal scripts
 Your own scripts from `~/.local/bin` (not installed tools like uv or yt-dlp) in a scripts folder, linked onto PATH.
 **Done when:** every personal script runs from PATH via the repo, and installed tools are untouched.
+Spec: [0002](../specs/0002-program-inventory/index.md) (the `bin-desktop` row), code goes in `home/bin-desktop/`
 - [ ] Build it: `/develop personal scripts`
 
 ## Slice 4: CLI tool configs
 
 ### 6. CLI tool configs
-The tuned CLI tools from the inventory (for example git, yazi, btop, mise, tealdeer, mpv), each in its own folder, with token files excluded.
+The tuned CLI tools from the inventory (git, mise, tealdeer, yt-dlp, easyeffects presets), each in its own folder, with token files excluded. yazi, btop and mpv have nothing tuned to track.
 **Done when:** each tool reads its config from the repo, and no credential file (`.git-credentials`, gh tokens) is tracked.
+Spec: [0002](../specs/0002-program-inventory/index.md) (scoped git credential helper, AC-7; drop the `zed` alias from `.zshrc`)
 - [ ] Build it: `/develop CLI tool configs`
 
 ## Slice 5: KDE settings
@@ -154,6 +156,7 @@ Mac Dock plasmoid, real-app-icons and its pacman hook, wallpapers, aurorae and c
 ### 10. Package list and bootstrap
 Turn the install list from the inventory (programs you actually use, not just the configured ones) into files the install script reads, split into desktop and server, and into pacman, AUR and flatpak.
 **Done when:** install on a new desktop offers every program on the install list, install on a server offers only server items, and sync flags programs installed since the list was last reviewed.
+Spec: [0002](../specs/0002-program-inventory/index.md) (the install list and its Follow-up: yay first, Plasma without `discover`)
 - [ ] Build it: `/develop package list and bootstrap`
 
 ## Slice 9: README and architecture docs
