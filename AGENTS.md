@@ -32,7 +32,12 @@ Tracer Bullet (move one program all the way through the new layout, install and 
 zsh -n home/zsh/.zshrc
 ```
 
-No tests or CI.
+```bash
+# Test dot against a throwaway repo and HOME (touches nothing real)
+tests/dot-status.sh
+```
+
+No CI.
 
 ## Rules
 

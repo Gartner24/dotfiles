@@ -75,6 +75,24 @@ link_dest() {
   realpath -m -s -- "$t"
 }
 
+# Folders, relative to ~, that held a file since deleted from a package (committed or not),
+# in this repo and in submodules under home/. stow never revisits a folder that left the
+# package, so its links stay behind; status scans these to report them.
+# ponytail: only deletions git saw, a file linked and removed without ever being committed is missed.
+gone_dirs() {
+  local sub pre
+  {
+    { git -C "$REPO" log --no-renames --diff-filter=D --name-only --format= -- home
+      git -C "$REPO" ls-files -d -- home; } | sed -n 's|^home/[^/]*/||p'
+    while IFS= read -r sub; do
+      [[ $sub == home/*/* && -e $REPO/$sub/.git ]] || continue
+      pre=${sub#home/*/}
+      { git -C "$REPO/$sub" log --no-renames --diff-filter=D --name-only --format=
+        git -C "$REPO/$sub" ls-files -d; } | sed "/^$/d; s|^|$pre/|"
+    done < <(submodule_paths)
+  } 2>/dev/null | sed 's|[^/]*$||; s|/$||' | sort -u
+}
+
 # Old layout: a link into this repo but outside home/. Replaced without a backup.
 is_old_link() { [[ -L $1 ]] && local d && d=$(link_dest "$1") && [[ $d == "$REPO"/* && $d != "$REPO"/home/* ]]; }
 
@@ -304,9 +322,10 @@ cmd_status() {
   while IFS= read -r rel; do echo "package: ~/$rel is in more than one package"; ((problems++)); done < <(
     for pkg in "$REPO"/home/*/; do [[ -d $pkg ]] && pkg_files "$(basename "$pkg")"; done | sort | uniq -d)
 
-  # links into the repo: look in ~ and in every folder any package mirrors
+  # links into the repo: look in ~, in every folder any package mirrors, and in folders that left one
   mapfile -t dirs < <({ echo; for pkg in "$REPO"/home/*/; do
-    [[ -d $pkg ]] && (cd "$pkg" && find . -mindepth 1 -type d -not -path '*/.git/*' -not -name .git -printf '%P\n'); done; } | sort -u)
+    [[ -d $pkg ]] && (cd "$pkg" && find . -mindepth 1 -type d -not -path '*/.git/*' -not -name .git -printf '%P\n'); done
+    gone_dirs; } | sort -u)
   while IFS= read -r l; do
     d=$(link_dest "$l")
     [[ $d == "$REPO"/* ]] || continue
