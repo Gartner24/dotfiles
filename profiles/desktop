@@ -4,6 +4,9 @@
 # arrow key fix for this laptop (system/keyd -> /etc/keyd)
 keyd
 
+# Oh My Zsh and the desktop half of the shell, sourced from .zshrc's conf.d loops (spec 0003)
+zsh-desktop
+
 # terminals; tmux stays off servers (scope decision 2026-10-11)
 tmux
 ghostty

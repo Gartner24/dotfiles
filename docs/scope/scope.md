@@ -101,10 +101,10 @@ Arch, Debian 12+ and Ubuntu 22.04+. Package installing itself is built by featur
 Spec: [0003](../specs/0003-server-profile.md), code in `home/zsh/`, `home/zsh-desktop/`, `profiles/desktop`, `tests/server-profile.sh`
 - [x] Design it (spec): `/architect server profile`
 - [ ] Build it: `/develop server profile`
-  - [ ] zsh split into `zsh-desktop`, desktop unchanged (AC-2, AC-12)
+  - [x] zsh split into `zsh-desktop`, desktop unchanged (AC-2, AC-12)
   - [ ] Server shell path: distro plugins, sparse git aliases, guarded aliases, Debian names, `freeram` and `up` (AC-3, AC-4, AC-5, AC-6)
   - [ ] Container test on six images with the startup ratio (AC-1, AC-7, AC-8, AC-11)
-  - [ ] Mapping table verified with `apt-cache policy`, mise fallback check (AC-9, AC-10)
+  - [x] Mapping table verified with `apt-cache policy`, mise fallback check (AC-9, AC-10)
 - [ ] Verify it: `/check verify server profile`
 
 ### 14. Starship prompt · done

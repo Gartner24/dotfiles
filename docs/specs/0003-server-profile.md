@@ -1,7 +1,7 @@
 # 0003. Server profile: distros, zsh split and package mapping
 
 **Date**: 2026-10-11
-**Status**: Proposed
+**Status**: In Progress
 
 ## Summary
 
@@ -86,36 +86,36 @@ Order in the shared `.zshrc`: history, `conf.d/early` loop (desktop loads Oh My 
 
 **Data model sketch**: no stored data. Three inputs: the `conf.d` folder contents (decided by which packages are linked), the mapping table below, and `/etc/os-release` (`ID`, `VERSION_ID`), which feature 10 reads to pick a table column.
 
-**Package mapping** (server install list from spec 0002, plus the two plugins). Releases: D12, D13 Debian; U22, U24, U26 Ubuntu. `apt` = distro package with the apt name. `to verify` rows get checked in build task 6 (AC-9). Confirmed rows come from the package search pages in References.
+**Package mapping** (server install list from spec 0002, plus the two plugins). Releases: D12, D13 Debian; U22, U24, U26 Ubuntu. `apt` = distro package with the apt name. Every apt row was checked with `apt-cache policy` in each release container on 2026-10-11 (AC-9, build task 6); versions are the candidate there.
 
 | Tool | Arch | apt name | D12 | D13 | U22 | U24 | U26 |
 |---|---|---|---|---|---|---|---|
-| zsh | `zsh` | `zsh` | apt, to verify | apt, to verify | apt, to verify | apt, to verify | apt, to verify |
-| git | `git` | `git` | apt, to verify | same | same | same | same |
+| zsh | `zsh` | `zsh` | apt 5.9 | apt 5.9 | apt 5.8.1 | apt 5.9 | apt 5.9 |
+| git | `git` | `git` | apt 2.39.5 | apt 2.47.3 | apt 2.34.1 | apt 2.43.0 | apt 2.53.0 |
 | neovim | `neovim` | `neovim` | mise (apt 0.7.2) | apt 0.10.4 | mise (apt 0.6.1) | mise (apt 0.9.5) | apt 0.11.6 |
-| stow | `stow` | `stow` | apt, to verify | same | same | same | same |
+| stow | `stow` | `stow` | apt 2.3.1 | apt 2.4.1 | apt 2.3.1 | apt 2.3.1 | apt 2.4.1 |
 | starship | `starship` | `starship` | mise (missing) | apt 1.22.1 | mise (missing) | mise (missing) | apt 1.22.1 |
-| fzf | `fzf` | `fzf` | apt, to verify | same | same | same | same |
-| zoxide | `zoxide` | `zoxide` | apt, to verify | same | same | same | same |
+| fzf | `fzf` | `fzf` | apt 0.38.0 | apt 0.60.3 | apt 0.29.0 | apt 0.44.1 | apt 0.67.0 |
+| zoxide | `zoxide` | `zoxide` | apt 0.4.3 | apt 0.9.7 | apt 0.4.3 | apt 0.9.3 | apt 0.9.8 |
 | eza | `eza` | `eza` | mise (missing) | apt 0.21.0 | mise (missing) | apt 0.18.2 | apt 0.23.4 |
 | bat | `bat` | `bat` (binary `batcat`) | apt 0.22.1 | apt 0.25.0 | apt 0.19.0 | apt 0.24.0 | apt 0.25.0 |
-| fd | `fd` | `fd-find` (binary `fdfind`) | apt, to verify | same | same | same | same |
-| jq | `jq` | `jq` | apt, to verify | same | same | same | same |
-| rsync | `rsync` | `rsync` | apt, to verify | same | same | same | same |
-| wget | `wget` | `wget` | apt, to verify | same | same | same | same |
-| unzip | `unzip` | `unzip` | apt, to verify | same | same | same | same |
-| openssh | `openssh` | `openssh-client` | apt, to verify | same | same | same | same |
-| git-delta | `git-delta` | `git-delta` | to verify, else mise | same | same | same | same |
-| github-cli | `github-cli` | `gh` | to verify, else mise | same | same | same | same |
-| difftastic | `difftastic` | `difftastic` | to verify, else mise | same | same | same | same |
-| btop | `btop` | `btop` | to verify, else mise | same | same | same | same |
-| duf | `duf` | `duf` | to verify, else mise | same | same | same | same |
-| dust | `dust` | `du-dust` | to verify, else mise | same | same | same | same |
-| hyperfine | `hyperfine` | `hyperfine` | to verify, else mise | same | same | same | same |
+| fd | `fd` | `fd-find` (binary `fdfind`) | apt 8.6.0 | apt 10.2.0 | apt 8.3.1 | apt 9.0.0 | apt 10.3.0 |
+| jq | `jq` | `jq` | apt 1.6 | apt 1.7.1 | apt 1.6 | apt 1.7.1 | apt 1.8.1 |
+| rsync | `rsync` | `rsync` | apt 3.2.7 | apt 3.5.0 | apt 3.2.7 | apt 3.2.7 | apt 3.4.1 |
+| wget | `wget` | `wget` | apt 1.21.3 | apt 1.25.0 | apt 1.21.2 | apt 1.21.4 | apt 1.25.0 |
+| unzip | `unzip` | `unzip` | apt 6.0 | apt 6.0 | apt 6.0 | apt 6.0 | apt 6.0 |
+| openssh | `openssh` | `openssh-client` | apt 9.2p1 | apt 10.0p1 | apt 8.9p1 | apt 9.6p1 | apt 10.2p1 |
+| git-delta | `git-delta` | `git-delta` | mise (missing) | apt 0.18.2 | mise (missing) | apt 0.16.5 | apt 0.18.2 |
+| github-cli | `github-cli` | `gh` | apt 2.23.0 | apt 2.46.0 | apt 2.4.0 | apt 2.45.0 | apt 2.46.0 |
+| difftastic | `difftastic` | `difftastic` | mise (missing) | mise (missing) | mise (missing) | mise (missing) | mise (missing) |
+| btop | `btop` | `btop` | apt 1.2.13 | apt 1.3.2 | apt 1.2.3 | apt 1.3.0 | apt 1.4.6 |
+| duf | `duf` | `duf` | apt 0.8.1 | apt 0.8.1 | apt 0.6.2 | apt 0.8.1 | apt 0.9.1 |
+| dust | `dust` | `du-dust` | mise (missing) | apt 1.2.0 | mise (missing) | mise (missing) | apt 1.2.4 |
+| hyperfine | `hyperfine` | `hyperfine` | apt 1.15.0 | apt 1.19.0 | apt 1.12.0 | apt 1.18.0 | apt 1.19.0 |
 | docker | `docker`, `docker-compose` | `docker-ce`, `docker-ce-cli`, `containerd.io`, `docker-buildx-plugin`, `docker-compose-plugin` | Docker apt repo | same | same | same | same |
-| mise | `mise` | `mise` | mise apt repo, unless the distro has it (to verify) | same | same | same | same |
-| zsh-autosuggestions | `zsh-autosuggestions` | `zsh-autosuggestions` | apt, to verify | same | same | same | same |
-| zsh-syntax-highlighting | `zsh-syntax-highlighting` | `zsh-syntax-highlighting` | apt, to verify | same | same | same | same |
+| mise | `mise` | `mise` | mise apt repo (not in the distro) | same | same | same | same |
+| zsh-autosuggestions | `zsh-autosuggestions` | `zsh-autosuggestions` | apt 0.7.0 | apt 0.7.1 | apt 0.7.0 | apt 0.7.0 | apt 0.7.1 |
+| zsh-syntax-highlighting | `zsh-syntax-highlighting` | `zsh-syntax-highlighting` | apt 0.7.1 | apt 0.8.0 | apt 0.7.1 | apt 0.7.1 | apt 0.8.0 |
 
 **Rules feature 10 builds** (decided here, built there):
 - A tool marked `mise` for a release goes into a machine local mise config file (for example `~/.config/mise/conf.d/server.toml`), never into the tracked `.config/mise/config.toml`, which both profiles share.
