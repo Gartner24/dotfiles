@@ -30,7 +30,7 @@ _These are recommendations to keep your build orderly, not requirements. Skip an
 | 2 | Program inventory | Foundation | done |
 | 3 | zsh through the new layout | Slice 1 | done |
 | 13 | Server profile | Slice 1 | planned |
-| 14 | Starship prompt | Slice 1 | in-progress |
+| 14 | Starship prompt | Slice 1 | done |
 | 4 | Terminals and editor | Slice 2 | done |
 | 5 | Personal scripts | Slice 3 | planned |
 | 6 | CLI tool configs | Slice 4 | planned |
@@ -99,10 +99,10 @@ A lean profile for VPS, VDS and headless servers: a fast zsh with no GUI configs
 **Done when:** a dry run on a server installs only server items, a new shell there starts noticeably faster than on the desktop (measured with hyperfine), and nothing GUI related is linked.
 - [ ] Design it (spec): `/architect server profile`
 
-### 14. Starship prompt · in-progress
+### 14. Starship prompt · done
 Try Starship in place of Powerlevel10k on both profiles, keeping the p10k config around until you decide.
 **Done when:** Starship shows what you use from p10k (git, path, errors, timing), shell startup is not slower (measured with hyperfine), and you choose to keep it or go back.
-`.zshrc` uses Starship when it is installed and p10k otherwise; `PROMPT_ENGINE=p10k zsh` gives one shell back on p10k. Startup 2026-10-11: 96 ms Starship vs 104 ms p10k (hyperfine, 20 runs, `zsh -i -c exit`). Open: your keep or go back call. code in `home/starship/`, `home/zsh/.zshrc`, `profiles/server`
+Startup 2026-10-11: 96 ms Starship vs 104 ms p10k (hyperfine, 20 runs, `zsh -i -c exit`). You kept Starship (2026-10-11): `.p10k.zsh`, the p10k fallback in `.zshrc` and the p10k clone in `install.sh` are gone; without starship a shell gets zsh's plain prompt. code in `home/starship/`, `home/zsh/.zshrc`, `profiles/server`
 - [x] Build it: `/develop starship prompt`
 
 ## Slice 2: Terminals and editor

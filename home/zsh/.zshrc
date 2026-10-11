@@ -1,12 +1,3 @@
-# Prompt: Starship when installed, p10k otherwise. Starship is on trial (feature 14);
-# .p10k.zsh stays until that is decided. One shell back on p10k: PROMPT_ENGINE=p10k zsh
-(( $+commands[starship] )) && : ${PROMPT_ENGINE:=starship} || : ${PROMPT_ENGINE:=p10k}
-
-# Enable Powerlevel10k instant prompt.
-if [[ $PROMPT_ENGINE == p10k && -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]; then
-  source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
-fi
-
 # ── History ───────────────────────────────────────────────────────────────────
 HISTFILE=~/.zsh_history
 HISTSIZE=100000
@@ -18,7 +9,8 @@ setopt HIST_IGNORE_SPACE
 
 # ── Oh My Zsh ─────────────────────────────────────────────────────────────────
 export ZSH="$HOME/.oh-my-zsh"
-[[ $PROMPT_ENGINE == p10k ]] && ZSH_THEME="powerlevel10k/powerlevel10k" || ZSH_THEME=""
+# no theme: the prompt is Starship, set up further down
+ZSH_THEME=""
 plugins=(git zsh-autosuggestions zsh-syntax-highlighting zsh-completions)
 source $ZSH/oh-my-zsh.sh
 
@@ -145,14 +137,13 @@ _term_emulator() {
 export TERM_EMULATOR=$(_term_emulator)
 
 # ── Prompt ────────────────────────────────────────────────────────────────────
+# Starship replaced Powerlevel10k (feature 14). Without starship installed the shell
+# keeps zsh's plain prompt.
 # OSC 133 prompt marks: lets tmux jump between prompts (Ctrl+Shift+PgUp/PgDn).
-# p10k emits them itself; Starship does not, so the mark goes in front of its prompt.
-if [[ $PROMPT_ENGINE == starship ]]; then
+# Starship does not emit them, so the mark goes in front of its prompt.
+if command -v starship &>/dev/null; then
   eval "$(starship init zsh)"
   PROMPT=$'%{\e]133;A\e\\%}'$PROMPT
-else
-  [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
-  typeset -g POWERLEVEL9K_TERM_SHELL_INTEGRATION=true
 fi
 
 # ── Startup ───────────────────────────────────────────────────────────────────

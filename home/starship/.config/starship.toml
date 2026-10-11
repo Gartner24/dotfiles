@@ -1,5 +1,4 @@
-# Starship trial in place of Powerlevel10k (feature 14). Mirrors the p10k lean setup
-# in home/zsh/.p10k.zsh: two lines, path and git on the first with errors, timing and
+# Replaced Powerlevel10k (feature 14) and mirrors its old lean setup: two lines, path and git on the first with errors, timing and
 # jobs pushed right, the prompt char alone on the second. No language versions: p10k
 # only showed them for version managers this machine does not use.
 add_newline = false

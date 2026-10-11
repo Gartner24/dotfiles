@@ -43,12 +43,12 @@ docs/               scope and specs, never linked
 ### zsh (`home/zsh`, both profiles)
 
 ```
-home/zsh/.zshrc      shell config: history, Oh My Zsh plugin list, aliases, functions (fixall, up, nosleep...)
-home/zsh/.p10k.zsh   Powerlevel10k prompt config
+home/zsh/.zshrc                       shell config: history, Oh My Zsh plugin list, aliases, functions (fixall, up, nosleep...)
+home/starship/.config/starship.toml   Starship prompt config (replaced Powerlevel10k)
 ```
 
-- Listed in `profiles/server`, so every machine gets it. `~/.zshrc` and `~/.p10k.zsh` link here: edit either one and the repo changes.
-- Only your own config lives here. Oh My Zsh, Powerlevel10k and the plugins (autosuggestions, syntax highlighting, completions) are downloaded by `install.sh`; which plugins load is set by `plugins=(...)` in `.zshrc`.
+- Both are listed in `profiles/server`, so every machine gets them. `~/.zshrc` and `~/.config/starship.toml` link here: edit either one and the repo changes.
+- Only your own config lives here. Oh My Zsh and the plugins (autosuggestions, syntax highlighting, completions) are downloaded by `install.sh`; which plugins load is set by `plugins=(...)` in `.zshrc`.
 - On a new machine: `./install.sh` (Oh My Zsh may write its own `~/.zshrc`), then `./dot install desktop`, which moves that file to `~/.dotfiles-backup/` and links the repo one. Then `exec zsh`.
 - After editing: `zsh -n home/zsh/.zshrc` to check syntax, `./dot sync` to commit.
 

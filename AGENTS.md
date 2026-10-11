@@ -5,7 +5,7 @@ headless server profile (planned, see `docs/scope/scope.md`). `install.sh` still
 
 ## Stack
 
-- **Language / Runtime**: zsh (Oh My Zsh + Powerlevel10k), bash for scripts, QML for the KDE plasmoid
+- **Language / Runtime**: zsh (Oh My Zsh + Starship prompt), bash for scripts, QML for the KDE plasmoid
 - **Framework**: none; plain files symlinked into `$HOME`
 - **Key dependencies**: Oh My Zsh, tmux, Ghostty, Alacritty, Neovim, mise, zoxide, fzf, fd, eza, bat, yazi
 - **Package manager**: pacman + yay (Arch), apt (Ubuntu); no project manifest
@@ -59,7 +59,7 @@ No CI.
 
 ## Gotchas
 
-- `~/.zshrc` and `~/.p10k.zsh` link to `home/zsh/`; editing either edits the repo. Oh My Zsh and its plugins are not in the repo (`install.sh` clones them).
+- `~/.zshrc` links to `home/zsh/` and `~/.config/starship.toml` to `home/starship/`; editing either edits the repo. Oh My Zsh and its plugins are not in the repo (`install.sh` clones them).
 - `sync-to-github.sh` runs `git add .` and pushes: anything untracked in the repo gets published.
 - `install.sh` still installs NVM, but `.zshrc` moved to mise; README only lists nvim, zsh and tmux.
 
