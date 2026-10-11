@@ -29,7 +29,7 @@ Tracer Bullet (move one program all the way through the new layout, install and 
 ./dot sync                 # scoped staging, asks before new files and before push
 
 # Check shell config after editing
-zsh -n .zshrc
+zsh -n home/zsh/.zshrc
 ```
 
 No tests or CI.
@@ -48,13 +48,13 @@ No tests or CI.
   repo first, then commit the updated submodule pointer here.
 - The repo is public: never commit keys, tokens, `~/.config/claude-fb/keys.env`, history files,
   or machine state (caches, window positions, recent files).
-- Comments in `.zshrc` explain why a setting exists (often a past failure); keep that style.
+- Comments in `home/zsh/.zshrc` explain why a setting exists (often a past failure); keep that style.
 - Shell functions that touch the system ask before destructive steps (`read -q`), see `wtclean`, `freeram`.
 - `kde/real-app-icons.hook` installs to `/etc/pacman.d/hooks/` with sudo (Arch only).
 
 ## Gotchas
 
-- `~/.zshrc` is a symlink: edit `~/dotfiles/.zshrc`, not the link.
+- `~/.zshrc` and `~/.p10k.zsh` link to `home/zsh/`; editing either edits the repo. Oh My Zsh and its plugins are not in the repo (`install.sh` clones them).
 - `sync-to-github.sh` runs `git add .` and pushes: anything untracked in the repo gets published.
 - `install.sh` still installs NVM, but `.zshrc` moved to mise; README only lists nvim, zsh and tmux.
 

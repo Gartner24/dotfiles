@@ -184,7 +184,7 @@ fi
 # ── Symlinks ──────────────────────────────────────────────────────────────────
 info "Creating symlinks..."
 
-ln -sf "$HOME/dotfiles/.zshrc"   "$HOME/.zshrc"
+# zsh moved to home/zsh, linked by ./dot install
 ln -sf "$HOME/dotfiles/.tmux.conf" "$HOME/.tmux.conf"
 
 # Terminal configs only on GUI

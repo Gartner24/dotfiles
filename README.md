@@ -40,6 +40,18 @@ docs/               scope and specs, never linked
 - `dot sync` only stages `home`, `system`, `kde` and `profiles`, and asks before adding new files.
 - To add a program: put its files under `home/<pkg>/` as they sit under `~`, add `<pkg>` to a profile, run `./dot install`.
 
+### zsh (`home/zsh`, both profiles)
+
+```
+home/zsh/.zshrc      shell config: history, Oh My Zsh plugin list, aliases, functions (fixall, up, nosleep...)
+home/zsh/.p10k.zsh   Powerlevel10k prompt config
+```
+
+- Listed in `profiles/server`, so every machine gets it. `~/.zshrc` and `~/.p10k.zsh` link here: edit either one and the repo changes.
+- Only your own config lives here. Oh My Zsh, Powerlevel10k and the plugins (autosuggestions, syntax highlighting, completions) are downloaded by `install.sh`; which plugins load is set by `plugins=(...)` in `.zshrc`.
+- On a new machine: `./install.sh` (Oh My Zsh may write its own `~/.zshrc`), then `./dot install desktop`, which moves that file to `~/.dotfiles-backup/` and links the repo one. Then `exec zsh`.
+- After editing: `zsh -n home/zsh/.zshrc` to check syntax, `./dot sync` to commit.
+
 ---
 
 ## Installation

@@ -28,7 +28,7 @@ _These are recommendations to keep your build orderly, not requirements. Skip an
 | E | Old install and sync scripts | Existing | existing |
 | 1 | Repo layout and linking method | Foundation | in-progress |
 | 2 | Program inventory | Foundation | planned |
-| 3 | zsh through the new layout | Slice 1 | planned |
+| 3 | zsh through the new layout | Slice 1 | done |
 | 13 | Server profile | Slice 1 | planned |
 | 14 | Starship prompt | Slice 1 | planned |
 | 4 | Terminals and editor | Slice 2 | planned |
@@ -44,7 +44,7 @@ _These are recommendations to keep your build orderly, not requirements. Skip an
 ## Already in the repo
 
 ### A. Shell config (zsh, p10k) (existing)
-`.zshrc` and `.p10k.zsh`, symlinked from home. code in `.zshrc`, `.p10k.zsh`
+`.zshrc` and `.p10k.zsh`, symlinked from home. code in `home/zsh/` (moved by feature 3)
 
 ### B. Terminal configs (tmux, ghostty, alacritty) (existing)
 tmux with `tmux-zen`, Ghostty and Alacritty configs. code in `.tmux.conf`, `.config/ghostty/`, `.config/alacritty/`, `.local/bin/tmux-zen`
@@ -81,10 +81,13 @@ Decide which programs get a config folder, which are left behind, and which go o
 
 ## Slice 1: zsh through the new layout
 
-### 3. zsh through the new layout
+### 3. zsh through the new layout (done)
 Move zsh (`.zshrc`, `.p10k.zsh`, Oh My Zsh plugins) into its own folder and run it through the new install, sync and README, proving the whole path on one program.
 **Done when:** a new shell loads from the new location, a dry run install shows the right links, sync picks up an edit, and the README has a zsh section.
-- [ ] Build it: `/develop zsh through the new layout`
+Only your own config moves; the Oh My Zsh plugins themselves stay downloaded by `install.sh` until feature 10 (your call, 2026-10-11). Listed in `profiles/server` (both profiles).
+Spec: [0001](../specs/0001-repo-layout-linking/index.md), code in `home/zsh/`
+- [x] Build it: `/develop zsh through the new layout`
+- [x] Verify it: `/check verify zsh through the new layout`
 
 ### 13. Server profile (needs a decision)
 A lean profile for VPS, VDS and headless servers: a fast zsh with no GUI configs, no fastfetch, no startup tips or shortcut panels, no tmux, and the same scripts installing only server items.

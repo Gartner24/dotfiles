@@ -41,3 +41,15 @@ _Steps come from the spec 0001 acceptance criteria. `/check verify` runs them an
 ## Acceptance criteria coverage
 - AC-1 docs step; AC-2, AC-4, AC-5, AC-6, AC-14 command steps; AC-3 profile steps; AC-7 system steps; AC-8 KDE steps; AC-9 hook steps; AC-10 sync steps; AC-15 history step.
 - Not built here: AC-11, AC-12 (features 4, 5), AC-13 theme installer call and `--apply-layout` (feature 8; profile submodule init is built), AC-16 (claude-config milestone).
+
+## Feature 3: zsh through the new layout · updated 2026-10-11
+_Done during /develop on this machine unless marked "tty". The sync step ran in a sandbox (cloned repo, fake HOME)._
+- [x] `.zshrc` and `.p10k.zsh` sit in `home/zsh/`, nothing zsh related is left at the repo root, `zsh` is in `profiles/server`. -> AC-1, AC-3
+- [x] `./dot install -n`: prints a backup for the real `~/.p10k.zsh`, a link for it, "replace old link ~/.zshrc" and its link; changes nothing. -> AC-5, AC-6
+- [x] `./dot install`: `~/.zshrc` and `~/.p10k.zsh` link into `home/zsh/`, the old `~/.p10k.zsh` is in `~/.dotfiles-backup/<timestamp>/`, `./dot status` prints `zsh: linked`. -> AC-2, AC-6, AC-14
+- [x] `zsh -n home/zsh/.zshrc` passes; `zsh -i -c 'whence -w fixall up y'` finds the functions and p10k loads. -> AC-2
+- [x] (tty) Open a new terminal: prompt, plugins, fastfetch and the shortcuts panel look as before. -> AC-2
+- [x] Edit `~/.zshrc` through the link, `./dot sync`: commits `sync: home/zsh/.zshrc` and asks before push. -> AC-10
+- [x] `install.sh` and `sync-to-github.sh` no longer link or copy `.zshrc`, so the two layouts never touch the same file. -> AC-1
+- [x] README has a zsh section; AGENTS.md points at `home/zsh/.zshrc`. -> AC-1
+- [x] `./dot install server` (sandbox) links `zsh`, so a server gets it too. -> AC-3

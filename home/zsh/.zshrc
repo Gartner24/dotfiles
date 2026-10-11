@@ -215,7 +215,7 @@ fi
 # those stay manual decisions.
 if [ -f /etc/arch-release ]; then
   fixall() {
-    echo ":: [1/5] Removing orphaned packages..."
+    echo ":: [1/6] Removing orphaned packages..."
     # zsh does not word-split unquoted vars: ${(f)...} splits Qtdq output on newlines into an array.
     local -a orphans=(${(f)"$(pacman -Qtdq 2>/dev/null)"})
     if (( ${#orphans} )); then
@@ -224,14 +224,14 @@ if [ -f /etc/arch-release ]; then
       echo "   none"
     fi
 
-    echo ":: [2/5] Cleaning package cache (yay -Sc)..."
+    echo ":: [2/6] Cleaning package cache (yay -Sc)..."
     yay -Sc --noconfirm
 
-    echo ":: [3/5] Clearing leftover download scraps..."
+    echo ":: [3/6] Clearing leftover download scraps..."
     sudo rm -f /var/cache/pacman/pkg/download-* /var/cache/pacman/pkg/*.part 2>/dev/null
     echo "   done"
 
-    echo ":: [4/5] Broken-package check..."
+    echo ":: [4/6] Broken-package check..."
     pacman -Qk 2>/dev/null | grep -iE 'missing|warning' | grep -v '0 missing files' || echo "   none broken"
 
     echo ":: [5/6] Dead git worktrees..."
