@@ -35,7 +35,7 @@ _These are recommendations to keep your build orderly, not requirements. Skip an
 | 14 | Starship prompt | Slice 1 | done |
 | 4 | Terminals and editor | Slice 2 | done |
 | 5 | Personal scripts | Slice 3 | done |
-| 6 | CLI tool configs | Slice 4 | in-progress |
+| 6 | CLI tool configs | Slice 4 | done |
 | 7 | KDE settings | Slice 5 | planned |
 | 8 | KDE extras | Slice 6 | planned |
 | 9 | System files | Slice 7 | planned |
@@ -137,12 +137,12 @@ Spec: [0002](../specs/0002-program-inventory/index.md) (the `bin-desktop` row), 
 
 ## Slice 4: CLI tool configs
 
-### 6. CLI tool configs · in-progress
+### 6. CLI tool configs · done
 The tuned CLI tools from the inventory (git, mise, tealdeer, yt-dlp, easyeffects presets), each in its own folder, with token files excluded. yazi, btop and mpv have nothing tuned to track.
 **Done when:** each tool reads its config from the repo, and no credential file (`.git-credentials`, gh tokens) is tracked.
 Spec: [0002](../specs/0002-program-inventory/index.md) (scoped git credential helper, AC-7; drop the `zed` alias, which lived in `desktop.zsh`), code in `home/git/`, `home/mise/` (server), `home/tealdeer/`, `home/yt-dlp/`, `home/easyeffects/` (desktop), `deny.list` (gh `hosts.yml`)
 - [x] Build it: `/develop CLI tool configs`
-- [ ] Verify it: `/check verify CLI tool configs`
+- [x] Verify it: `/check verify CLI tool configs`
 
 ## Slice 5: KDE settings
 
