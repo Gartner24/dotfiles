@@ -194,7 +194,11 @@ export PATH="$HOME/.cargo/bin:$PATH"
 
 # Chrome for lighthouse / chrome-launcher (no system Chrome installed; use Playwright's cached Chromium).
 # Globs the newest chromium-* so a Playwright version bump won't break this. ponytail: pin a real path if the glob ever misfires.
-export CHROME_PATH="$(ls -d "$HOME"/.cache/ms-playwright/chromium-*/chrome-linux64/chrome 2>/dev/null | sort -V | tail -1)"
+# (N) keeps a missing cache silent: without it zsh's nomatch prints "no matches found" in every new shell
+# (the 2>/dev/null on the old ls never saw it), and an array avoids ls -d falling back to "." on no match.
+_chrome=("$HOME"/.cache/ms-playwright/chromium-*/chrome-linux64/chrome(Nn))
+(( $#_chrome )) && export CHROME_PATH="$_chrome[-1]"
+unset _chrome
 
 # ── fzf (fuzzy finder) ────────────────────────────────────────────────────────
 # Ctrl+R fuzzy history, Ctrl+T file picker, Alt+C fuzzy cd. Backed by fd when present.
