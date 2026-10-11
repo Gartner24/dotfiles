@@ -1,3 +1,3 @@
 [submodule ".config/nvim"]
-	path = .config/nvim
+	path = home/nvim/.config/nvim
 	url = https://github.com/Gartner24/nvim.lua

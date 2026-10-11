@@ -184,15 +184,8 @@ fi
 # ── Symlinks ──────────────────────────────────────────────────────────────────
 info "Creating symlinks..."
 
-# zsh moved to home/zsh, linked by ./dot install
-ln -sf "$HOME/dotfiles/.tmux.conf" "$HOME/.tmux.conf"
-
-# Terminal configs only on GUI
+# zsh, nvim, tmux, ghostty, alacritty and tmux-zen moved to home/, linked by ./dot install
 if [ "$HAS_GUI" = true ]; then
-  mkdir -p "$HOME/.config/alacritty" "$HOME/.config/ghostty"
-  ln -sf "$HOME/dotfiles/.config/alacritty/alacritty.toml" "$HOME/.config/alacritty/alacritty.toml"
-  ln -sf "$HOME/dotfiles/.config/ghostty/config" "$HOME/.config/ghostty/config"
-
   # KDE: Mac Dock widget + real-app-logos icon theme builder (and its pacman hook on Arch)
   mkdir -p "$HOME/.local/share/plasma/plasmoids" "$HOME/.local/bin"
   ln -sfn "$HOME/dotfiles/.local/share/plasma/plasmoids/org.santiago.macdock" "$HOME/.local/share/plasma/plasmoids/org.santiago.macdock"
@@ -200,18 +193,6 @@ if [ "$HAS_GUI" = true ]; then
   if [ "$OS" = arch ]; then
     sudo install -Dm644 "$HOME/dotfiles/kde/real-app-icons.hook" /etc/pacman.d/hooks/real-app-icons.hook
   fi
-fi
-
-# ── Neovim ────────────────────────────────────────────────────────────────────
-if [ ! -d "$HOME/.config/nvim/.git" ]; then
-  if [ -d "$HOME/.config/nvim" ]; then
-    error "~/.config/nvim exists but is not a git repo. Refusing to overwrite."
-  fi
-  info "Cloning nvim config..."
-  git clone https://github.com/Gartner24/nvim.lua.git "$HOME/.config/nvim"
-else
-  info "Updating nvim config..."
-  (cd "$HOME/.config/nvim" && git fetch && git pull)
 fi
 
 # ── Default shell ─────────────────────────────────────────────────────────────

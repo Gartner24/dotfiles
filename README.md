@@ -52,6 +52,24 @@ home/zsh/.p10k.zsh   Powerlevel10k prompt config
 - On a new machine: `./install.sh` (Oh My Zsh may write its own `~/.zshrc`), then `./dot install desktop`, which moves that file to `~/.dotfiles-backup/` and links the repo one. Then `exec zsh`.
 - After editing: `zsh -n home/zsh/.zshrc` to check syntax, `./dot sync` to commit.
 
+### Terminals (`home/tmux`, `home/ghostty`, `home/alacritty`, `home/bin-desktop`, desktop only)
+
+```
+home/tmux/.tmux.conf                           tmux config (reload with prefix r)
+home/bin-desktop/.local/bin/tmux-zen           pane layout helper the tmux binds call
+home/ghostty/.config/ghostty/config            Ghostty, Gruvbox Dark Hard
+home/alacritty/.config/alacritty/alacritty.toml Alacritty, same colors
+```
+
+- Listed in `profiles/desktop`; servers get none of them. Check after editing with
+  `ghostty +validate-config` or `alacritty migrate --dry-run`.
+
+### Neovim (`home/nvim`, both profiles)
+
+`home/nvim/.config/nvim` is a submodule of [nvim.lua](https://github.com/Gartner24/nvim.lua),
+linked file by file into `~/.config/nvim`. Commit and push in the submodule first, then commit
+its pointer here (`./dot sync` refuses a pointer that is not pushed yet).
+
 ---
 
 ## Installation
@@ -96,10 +114,10 @@ exec zsh
 
 When `nvim.lua` is updated:
 ```bash
-cd ~/dotfiles/.config/nvim
+cd ~/dotfiles/home/nvim/.config/nvim
 git pull origin main
 cd ~/dotfiles
-git add .config/nvim
+git add home/nvim/.config/nvim
 git commit -m "Update nvim submodule"
 git push
 ```

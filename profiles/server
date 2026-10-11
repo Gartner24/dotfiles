@@ -4,3 +4,5 @@
 
 # .zshrc and .p10k.zsh (Oh My Zsh and its plugins are installed by install.sh)
 zsh
+# Neovim config, a submodule of Gartner24/nvim.lua inside the package
+nvim

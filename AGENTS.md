@@ -44,7 +44,7 @@ No tests or CI.
   are symlinked by `install.sh`. A program is in the old layout or the new one, never both.
 - `deny.list` plus `hooks/pre-commit` (enabled by `dot install`) refuse commits adding personal
   state. Do not bypass with `--no-verify`.
-- `.config/nvim` is a git submodule (`github.com/Gartner24/nvim.lua`). Commit nvim changes in that
+- `home/nvim/.config/nvim` is a git submodule (`github.com/Gartner24/nvim.lua`). Commit nvim changes in that
   repo first, then commit the updated submodule pointer here.
 - The repo is public: never commit keys, tokens, `~/.config/claude-fb/keys.env`, history files,
   or machine state (caches, window positions, recent files).

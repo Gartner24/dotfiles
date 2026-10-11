@@ -3,3 +3,10 @@
 
 # arrow key fix for this laptop (system/keyd -> /etc/keyd)
 keyd
+
+# terminals; tmux stays off servers (scope decision 2026-10-11)
+tmux
+ghostty
+alacritty
+# desktop only scripts (tmux-zen for now, the rest come with feature 5)
+bin-desktop

@@ -24,30 +24,9 @@ echo -e "╚══════════════════════�
 
 [ -d "$DOTFILES" ] || error "Dotfiles directory not found at $DOTFILES"
 
-# ── Copy real configs from $HOME into repo ────────────────────────────────────
-copy_config() {
-  local src="$1"
-  local dest="$2"
-  local real_src
-  real_src=$(realpath "$src" 2>/dev/null) || { warn "Source not found: $src — skipping."; return; }
-  local real_dest
-  real_dest=$(realpath "$DOTFILES/$dest" 2>/dev/null || echo "$DOTFILES/$dest")
-
-  if [ "$real_src" = "$real_dest" ]; then
-    info "Skipping $dest (symlink points to repo — already in sync)"
-    return
-  fi
-
-  mkdir -p "$(dirname "$DOTFILES/$dest")"
-  cp "$real_src" "$DOTFILES/$dest"
-  success "Copied $dest"
-}
-
 cd "$DOTFILES"
 
-copy_config "$HOME/.tmux.conf"                      ".tmux.conf"
-copy_config "$HOME/.config/alacritty/alacritty.toml" ".config/alacritty/alacritty.toml"
-copy_config "$HOME/.config/ghostty/config"          ".config/ghostty/config"
+# tmux, alacritty and ghostty moved to home/, synced by ./dot sync
 
 # ── Commit & push ─────────────────────────────────────────────────────────────
 git add .

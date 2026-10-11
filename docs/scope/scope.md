@@ -31,7 +31,7 @@ _These are recommendations to keep your build orderly, not requirements. Skip an
 | 3 | zsh through the new layout | Slice 1 | done |
 | 13 | Server profile | Slice 1 | planned |
 | 14 | Starship prompt | Slice 1 | planned |
-| 4 | Terminals and editor | Slice 2 | planned |
+| 4 | Terminals and editor | Slice 2 | in-progress |
 | 5 | Personal scripts | Slice 3 | planned |
 | 6 | CLI tool configs | Slice 4 | planned |
 | 7 | KDE settings | Slice 5 | planned |
@@ -47,10 +47,10 @@ _These are recommendations to keep your build orderly, not requirements. Skip an
 `.zshrc` and `.p10k.zsh`, symlinked from home. code in `home/zsh/` (moved by feature 3)
 
 ### B. Terminal configs (tmux, ghostty, alacritty) (existing)
-tmux with `tmux-zen`, Ghostty and Alacritty configs. code in `.tmux.conf`, `.config/ghostty/`, `.config/alacritty/`, `.local/bin/tmux-zen`
+tmux with `tmux-zen`, Ghostty and Alacritty configs. code in `home/tmux/`, `home/ghostty/`, `home/alacritty/`, `home/bin-desktop/` (moved by feature 4)
 
 ### C. Neovim submodule (existing)
-Neovim config lives in its own repo (`Gartner24/nvim.lua`), pulled in as a git submodule. code in `.config/nvim`
+Neovim config lives in its own repo (`Gartner24/nvim.lua`), pulled in as a git submodule. code in `home/nvim/.config/nvim` (moved by feature 4)
 
 ### D. KDE Mac Dock plasmoid and real-app-icons (existing)
 Custom dock widget, icon theme builder and its pacman hook. code in `.local/share/plasma/`, `.local/bin/real-app-icons`, `kde/`
@@ -106,10 +106,13 @@ Try Starship in place of Powerlevel10k on both profiles, keeping the p10k config
 
 ## Slice 2: Terminals and editor
 
-### 4. Terminals and editor
+### 4. Terminals and editor (in-progress)
 Move tmux (with `tmux-zen`), Ghostty, Alacritty and the nvim submodule into their folders through the same path.
 **Done when:** each program starts with its config from the new location and the nvim submodule still updates from its own repo.
-- [ ] Build it: `/develop terminals and editor`
+`tmux-zen` went into `home/bin-desktop` (spec 0002); feature 5 adds the other desktop scripts there. The old nvim clone is in `~/.dotfiles-backup/2026-10-11-nvim-clone/` after its work was pushed (your call, 2026-10-11).
+Spec: [0001](../specs/0001-repo-layout-linking/index.md) (AC-11, AC-12), code in `home/tmux/`, `home/ghostty/`, `home/alacritty/`, `home/bin-desktop/`, `home/nvim/`
+- [x] Build it: `/develop terminals and editor`
+- [ ] Verify it: `/check verify terminals and editor`
 
 ## Slice 3: Personal scripts
 
