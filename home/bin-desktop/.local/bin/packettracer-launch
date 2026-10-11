@@ -1,0 +1,31 @@
+#!/bin/sh
+# Launch Cisco Packet Tracer with three workarounds. Each is here for a
+# specific reason; none is cosmetic preference.
+#
+# 1) PATH: put ~/.local/bin ahead of /usr/bin so the xdg-open shim wins.
+#    The AppImage exports its bundled Qt on LD_LIBRARY_PATH; any browser it
+#    spawns inherits that and dies, so the NetAcad login window never opens.
+#    The shim strips those vars, then calls the real /usr/bin/xdg-open.
+#
+# 2) QT_SCALE_FACTOR: the AppImage bundles only libqxcb.so - no Wayland
+#    plugin - so it runs under XWayland at scale 1 and renders tiny on a
+#    2880x1800 panel. KDE reports Xft.dpi=139, but Qt 5 ignores DPI unless
+#    asked. 1.45 matches eDP-1. Override per launch with PT_SCALE=<n>.
+#
+# 3) XDG_CONFIG_HOME: pointed at an empty directory so Packet Tracer cannot
+#    read ~/.config/kdeglobals. With a dark KDE colour scheme it draws device
+#    name labels in near-white on its hardcoded white canvas, making them
+#    invisible. Packet Tracer keeps its own data in ~/pt, not XDG_CONFIG_HOME,
+#    so nothing of its own is lost.
+PATH="$HOME/.local/bin:$PATH"
+export PATH
+
+QT_SCALE_FACTOR="${PT_SCALE:-1.45}"
+export QT_SCALE_FACTOR
+
+PT_CFG="$HOME/.local/share/packettracer-config"
+mkdir -p "$PT_CFG"
+XDG_CONFIG_HOME="$PT_CFG"
+export XDG_CONFIG_HOME
+
+exec /usr/lib/packettracer/packettracer.AppImage "$@"

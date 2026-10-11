@@ -32,7 +32,7 @@ _These are recommendations to keep your build orderly, not requirements. Skip an
 | 13 | Server profile | Slice 1 | planned |
 | 14 | Starship prompt | Slice 1 | done |
 | 4 | Terminals and editor | Slice 2 | done |
-| 5 | Personal scripts | Slice 3 | planned |
+| 5 | Personal scripts | Slice 3 | done |
 | 6 | CLI tool configs | Slice 4 | planned |
 | 7 | KDE settings | Slice 5 | planned |
 | 8 | KDE extras | Slice 6 | planned |
@@ -117,11 +117,13 @@ Spec: [0001](../specs/0001-repo-layout-linking/index.md) (AC-11, AC-12), code in
 
 ## Slice 3: Personal scripts
 
-### 5. Personal scripts
+### 5. Personal scripts · done
 Your own scripts from `~/.local/bin` (not installed tools like uv or yt-dlp) in a scripts folder, linked onto PATH.
 **Done when:** every personal script runs from PATH via the repo, and installed tools are untouched.
-Spec: [0002](../specs/0002-program-inventory/index.md) (the `bin-desktop` row), code goes in `home/bin-desktop/`
-- [ ] Build it: `/develop personal scripts`
+`xdg-open` is a shim that only wins inside `packettracer-launch` (it puts `~/.local/bin` first); a normal shell still finds `/usr/bin/xdg-open`, as before. `real-app-icons` stays in the old layout until feature 8. No script is server side, so `home/bin/` is not created yet.
+Spec: [0002](../specs/0002-program-inventory/index.md) (the `bin-desktop` row), [0001](../specs/0001-repo-layout-linking/index.md) (AC-12), code in `home/bin-desktop/`
+- [x] Build it: `/develop personal scripts`
+- [x] Verify it: `/check verify personal scripts`
 
 ## Slice 4: CLI tool configs
 

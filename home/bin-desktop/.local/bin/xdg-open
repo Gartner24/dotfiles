@@ -1,0 +1,10 @@
+#!/bin/sh
+# Shim for launching a browser out of Cisco Packet Tracer's AppImage.
+#
+# The AppImage runs with LD_LIBRARY_PATH pointing at its own bundled Qt, and
+# any browser it spawns inherits that and fails to start - which is why the
+# NetAcad login window never appears. Strip the AppImage's environment, then
+# hand off to the real xdg-open.
+exec env -u LD_LIBRARY_PATH -u APPDIR -u APPIMAGE -u QT_PLUGIN_PATH \
+         -u QTWEBENGINEPROCESS_PATH -u PERLLIB -u GTK_PATH \
+     /usr/bin/xdg-open "$@"
