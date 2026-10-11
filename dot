@@ -209,19 +209,28 @@ install_kde() {
 sync_kde() {
   local rc grp key v
   local -A fresh=()
+  # rebuilt from scratch each sync, so a key dropped from allow.list leaves the repo too.
+  # Built in a temp folder and moved in only after every key was written: a failed
+  # write must never leave the tracked file deleted or half written.
+  KDE_TMP=$(mktemp -d) || die "could not create a temp folder"
+  trap 'rm -rf "$KDE_TMP"' EXIT
   while IFS=$'\t' read -r rc grp key; do
-    # rebuilt from scratch each sync, so a key dropped from allow.list leaves the repo too
-    [[ -n ${fresh[$rc]:-} ]] || { rm -f -- "$REPO/kde/$rc"; fresh[$rc]=1; }
+    fresh[$rc]=1
     v=$(kcfg read "$rc" "$grp" "$key")
     if [[ $v == "$ABSENT" ]]; then echo "kde: $rc [$grp] $key is not set on this machine, skipped"; continue; fi
-    kcfg write "$REPO/kde/$rc" "$grp" "$key" "$v" || die "could not write kde/$rc"
+    kcfg write "$KDE_TMP/$rc" "$grp" "$key" "$v" || die "could not write kde/$rc"
   done < <(kde_keys)
+  for rc in "${!fresh[@]}"; do
+    if [[ -f $KDE_TMP/$rc ]]; then mv -f -- "$KDE_TMP/$rc" "$REPO/kde/$rc" || die "could not replace kde/$rc"
+    else rm -f -- "$REPO/kde/$rc"
+    fi
+  done
 }
 
 # --- commands -----------------------------------------------------------------
 
 cmd_install() {
-  local arg prof="" sub n
+  local arg prof="" sub n dups
   DRY=0
   for arg in "$@"; do
     case $arg in
@@ -232,6 +241,8 @@ cmd_install() {
   done
   resolve_profile "$prof"
   ((${#BAD[@]})) && die "profile names a folder that does not exist: ${BAD[*]}"
+  dups=$({ list_names server; list_names desktop; } | sort | uniq -d)
+  [[ -n $dups ]] && die "listed more than once in profiles: $(echo $dups)"
   BK_BASE=$HOME/.dotfiles-backup/$(date +%F-%H%M%S)
   ((DRY)) && echo "dry run, profile $PROFILE: nothing is changed"
 

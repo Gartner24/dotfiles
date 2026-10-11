@@ -28,5 +28,5 @@ sk-ant-[A-Za-z0-9_-]{10,}
 -----BEGIN [A-Z ]*PRIVATE KEY-----
 
 # wifi and wireguard secrets
-^[[:space:]]*psk=
-^[[:space:]]*PrivateKey[[:space:]]*=
+(^|[^[:alnum:]_])psk=
+(^|[^[:alnum:]_])PrivateKey[[:space:]]*=

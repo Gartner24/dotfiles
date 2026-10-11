@@ -67,7 +67,7 @@ Spec: [0001](../specs/0001-repo-layout-linking/index.md), code in `dot`, `deny.l
 - [x] Design it (spec): `/architect repo layout and linking method`
 - [ ] Build it: `/develop repo layout and linking method`
   - [x] Deny list, commit hook and profile lists (AC-3, AC-9)
-  - [x] `dot install` and `dot status` for stow packages (AC-2, AC-4, AC-5, AC-6, AC-13, AC-14)
+  - [x] `dot install` and `dot status` for stow packages (AC-2, AC-4, AC-5, AC-6, AC-14; of AC-13 only the profile submodule init is built, the theme installer call and `--apply-layout` come with feature 8)
   - [x] `dot sync` with scoped staging and submodule guard (AC-10)
   - [x] System and KDE copy paths, one file each (AC-7, AC-8)
   - [x] README and AGENTS.md layout notes, one time history scan (AC-1, AC-15)

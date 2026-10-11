@@ -14,6 +14,10 @@ _Steps come from the spec 0001 acceptance criteria. `/check verify` runs them an
 - [x] `git config core.hooksPath` prints `hooks` after an install. -> AC-9
 - [x] Stage a line with a 36 char `ghp_` token: commit refused with `file:line`. Remove the `ghp_` pattern from `deny.list` and the same commit passes (mutation check). Editing `deny.list` alone passes; a comment only `deny.list` blocks every commit. -> AC-9
 - [x] Stage a new file named `.zsh_history` anywhere: refused as `(path)`. A line `HISTFILE=~/.zsh_history` passes. -> AC-9
+- [x] Stage a line starting `wifi ` followed by a psk assignment, and a line starting `[Interface] ` followed by a PrivateKey assignment (the secret mid line, not at its start): both refused. `mypsk` and `PrivateKeyFile` assignments pass. Put the old anchored psk pattern (start of line only) back and the wifi line passes (mutation check). -> AC-9
+- [x] Stage a psk assignment in a file named `with space.txt`: refused as `with space.txt:1`, no tab before the colon. -> AC-9
+- [x] List the same package in both profiles: `./dot install -n` exits 1 with "listed more than once in profiles". -> AC-3
+- [x] Make `kwriteconfig6` fail during `./dot sync`: exit 1 and `kde/kglobalshortcutsrc` is unchanged, not deleted. A normal run reproduces the tracked file. -> AC-8
 - [x] Edit a tracked file under `home/`, create an untracked one, edit `README.md`: `./dot sync` commits only the tracked edit, lists the new file (asks, tty), lists `README.md` as outside scope. -> AC-10
 - [x] A submodule under `home/` with an unpushed commit: sync refuses its pointer; after pushing, sync takes it. -> AC-10
 - [x] Seven changed files: commit message is `sync: <5 paths> (+2 more)`. -> AC-10

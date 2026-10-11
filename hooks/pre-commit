@@ -18,7 +18,7 @@ fi
 git -C "$root" diff --cached -U0 --no-color --no-ext-diff --ignore-submodules -- . ':(exclude)deny.list' |
   awk -v L="$tmp/loc" -v C="$tmp/con" '
     /^diff --git / { h = 1; next }
-    h && /^\+\+\+ / { f = substr($0, 7); next }
+    h && /^\+\+\+ / { f = substr($0, 7); sub(/\t$/, "", f); next }
     /^@@ / { h = 0; split($3, a, ","); n = substr(a[1], 2); next }
     !h && /^\+/ { print f ":" n > L; print substr($0, 2) > C; n++ }'
 
