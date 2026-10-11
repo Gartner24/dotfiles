@@ -102,8 +102,8 @@ Spec: [0003](../specs/0003-server-profile.md), code in `home/zsh/`, `home/zsh-de
 - [x] Design it (spec): `/architect server profile`
 - [ ] Build it: `/develop server profile`
   - [x] zsh split into `zsh-desktop`, desktop unchanged (AC-2, AC-12)
-  - [ ] Server shell path: distro plugins, sparse git aliases, guarded aliases, Debian names, `freeram` and `up` (AC-3, AC-4, AC-5, AC-6)
-  - [ ] Container test on six images with the startup ratio (AC-1, AC-7, AC-8, AC-11)
+  - [x] Server shell path: distro plugins, sparse git aliases, guarded aliases, Debian names, `freeram` and `up` (AC-3, AC-4, AC-5, AC-6)
+  - [x] Container test on six images with the startup ratio (AC-1, AC-7, AC-8, AC-11)
   - [x] Mapping table verified with `apt-cache policy`, mise fallback check (AC-9, AC-10)
 - [ ] Verify it: `/check verify server profile`
 

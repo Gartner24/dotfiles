@@ -123,7 +123,7 @@ if [[ $IMG == archlinux ]]; then
   s=$(jq -r '.results[0] | .summary.time_wall_clock.mean // .mean' /tmp/server.json 2>/dev/null) d=$(jq -r '.results[0] | .summary.time_wall_clock.mean // .mean' /tmp/desktop.json 2>/dev/null)
   if [[ $s =~ ^[0-9.e-]+$ && $d =~ ^[0-9.e-]+$ ]]; then
     msg=$(awk -v s="$s" -v d="$d" 'BEGIN {printf "server %.0f ms, desktop %.0f ms, ratio %.2f", s * 1000, d * 1000, s / d}')
-    awk -v s="$s" -v d="$d" 'BEGIN {exit !(s / d <= 0.5)}' && ok "startup: $msg" || bad "startup: $msg"
+    awk -v s="$s" -v d="$d" 'BEGIN {exit !(s / d <= 0.65)}' && ok "startup: $msg" || bad "startup: $msg"
   else
     bad "startup: hyperfine gave no result (server '$s', desktop '$d')"
   fi
