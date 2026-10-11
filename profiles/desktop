@@ -1,0 +1,5 @@
+# Desktop profile: extras on top of profiles/server, which is always included.
+# One name per line, a folder under home/ or system/, or a submodule at the repo root.
+
+# arrow key fix for this laptop (system/keyd -> /etc/keyd)
+keyd

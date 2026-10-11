@@ -1,1 +1,4 @@
 .git
+# dot: this machine's saved profile, and install backups if they ever land in the repo
+/.dot-profile
+.dotfiles-backup/

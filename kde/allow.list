@@ -1,0 +1,7 @@
+# KDE keys dot keeps: <rcfile> <Group> <Key> per line. Quote a group or key with spaces.
+# Nested groups as Group/Sub. Only these keys are ever read into kde/<rcfile>.
+# Feature 7 (KDE settings) fills in the full list.
+
+# Meta+Up maximizes instead of quick tiling to the top
+kglobalshortcutsrc kwin "Window Maximize"
+kglobalshortcutsrc kwin "Window Quick Tile Top"

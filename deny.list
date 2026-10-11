@@ -1,0 +1,32 @@
+# Personal state that must never be committed. One extended regex (grep -E) per line.
+# hooks/pre-commit checks every added line and every added file path against these;
+# dot sync checks live system files against them before copying one back.
+#
+# File name patterns are anchored to a whole path (no '=' or space before it), so a
+# new file at that path is blocked while a config line that only mentions it
+# (HISTFILE=~/.zsh_history) is not.
+
+# history files
+^([^ ="']*/)?\.(zsh|bash|python|node_repl|sqlite|psql|mysql)_history$
+^([^ ="']*/)?\.lesshst$
+^([^ ="']*/)?\.wget-hsts$
+
+# credential files
+^([^ ="']*/)?\.git-credentials$
+^([^ ="']*/)?\.config/claude-fb/keys\.env$
+
+# token prefixes
+ghp_[A-Za-z0-9]{20,}
+gho_[A-Za-z0-9]{20,}
+github_pat_[A-Za-z0-9_]{20,}
+AKIA[0-9A-Z]{16}
+xox[bp]-[A-Za-z0-9-]{10,}
+sk-ant-[A-Za-z0-9_-]{10,}
+
+# private keys
+# letters and spaces only, so a doc quoting this pattern does not match itself
+-----BEGIN [A-Z ]*PRIVATE KEY-----
+
+# wifi and wireguard secrets
+^[[:space:]]*psk=
+^[[:space:]]*PrivateKey[[:space:]]*=

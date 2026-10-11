@@ -1,0 +1,3 @@
+# Server profile: lean, shell only. One name per line, a folder under home/ or system/,
+# or a submodule at the repo root. The desktop profile installs everything here too.
+# A name may appear in only one of the two lists.

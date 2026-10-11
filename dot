@@ -1,0 +1,380 @@
+#!/usr/bin/env bash
+# dot: install, sync and status for this repo. Design: docs/specs/0001-repo-layout-linking/index.md
+set -uo pipefail
+
+REPO=$(dirname "$(readlink -f "$0")")
+PROFILE_FILE=$REPO/.dot-profile
+SCOPE=(home system kde profiles)
+ABSENT=__dot_absent__
+
+usage() {
+  cat <<'EOF'
+usage: dot <command> [options]
+
+  install [desktop|server] [-n]   link the profile's packages, copy its system files and KDE keys
+                                  (-n: dry run, print everything and change nothing)
+  sync                            pull KDE keys and system drift in, commit the repo, ask before push
+  status                          report links and drift; exits 1 when it finds a problem
+
+The profile given to install is saved in .dot-profile and used when none is given.
+Exit codes: 0 ok, 1 failure, 2 bad usage.
+EOF
+}
+
+die() { echo "dot: $*" >&2; exit 1; }
+# Prompts read the terminal directly: most of them run inside loops that own stdin.
+[[ -t 0 ]] && TTY=1 || TTY=0
+ask() { ((TTY)) || return 1; local r; read -r -p "$1 [y/N] " r </dev/tty; [[ $r == [yY] ]]; }
+
+# --- profiles -----------------------------------------------------------------
+
+list_names() { [[ -f $REPO/profiles/$1 ]] && sed 's/#.*//; s/[[:space:]]//g; /^$/d' "$REPO/profiles/$1"; }
+
+submodule_paths() { git -C "$REPO" config -f .gitmodules --get-regexp '\.path$' 2>/dev/null | cut -d' ' -f2-; }
+
+# Fills PKGS (home/<n>), SYSS (system/<n>), SUBS (root submodules) and BAD (no folder).
+load_profile() {
+  PKGS=() SYSS=() SUBS=() BAD=()
+  local n subs
+  subs=$(submodule_paths)
+  while IFS= read -r n; do
+    if [[ -d $REPO/home/$n ]]; then PKGS+=("$n")
+    elif [[ -d $REPO/system/$n ]]; then SYSS+=("$n")
+    elif grep -qxF -- "$n" <<<"$subs"; then SUBS+=("$n")
+    else BAD+=("$n")
+    fi
+  done < <(list_names server; [[ $1 == desktop ]] && list_names desktop)
+}
+
+resolve_profile() {
+  if [[ -n ${1:-} ]]; then PROFILE=$1
+  elif [[ -s $PROFILE_FILE ]]; then PROFILE=$(<"$PROFILE_FILE")
+  else echo "dot: no profile given or saved, run: dot install desktop|server" >&2; exit 2
+  fi
+  [[ $PROFILE == desktop || $PROFILE == server ]] || { echo "dot: unknown profile '$PROFILE'" >&2; exit 2; }
+  local t tools=(stow git)
+  [[ $PROFILE == desktop ]] && tools+=(kreadconfig6 kwriteconfig6)
+  for t in "${tools[@]}"; do command -v "$t" >/dev/null || die "missing tool: $t"; done
+  load_profile "$PROFILE"
+}
+
+# --- stow packages ------------------------------------------------------------
+
+# Files stow links for a package, relative to ~ (stow's default ignore list left out).
+pkg_files() {
+  (cd "$REPO/home/$1" && find . \( -name .git -o -name .gitignore -o -name .gitmodules \) -prune \
+    -o \( -type f -o -type l \) -printf '%P\n') |
+    grep -vE '^(README|LICENSE|COPYING)[^/]*$|~$|(^|/)#[^/]*#$' | sort
+}
+
+# Where a symlink points, as an absolute path, without following further links.
+link_dest() {
+  local t
+  t=$(readlink -- "$1")
+  [[ $t == /* ]] || t=$(dirname -- "$1")/$t
+  realpath -m -s -- "$t"
+}
+
+# Old layout: a link into this repo but outside home/. Replaced without a backup.
+is_old_link() { [[ -L $1 ]] && local d && d=$(link_dest "$1") && [[ $d == "$REPO"/* && $d != "$REPO"/home/* ]]; }
+
+backup() {
+  local rel=$1
+  if [[ -z ${BK:-} ]]; then
+    BK=$BK_BASE
+    local i=1
+    while [[ -e $BK ]]; do BK=$BK_BASE-$i; ((i++)); done
+  fi
+  if ((DRY)); then echo "backup  ~/$rel -> $BK/$rel"; return; fi
+  mkdir -p "$(dirname "$BK/$rel")" && mv -- "$HOME/$rel" "$BK/$rel" || die "could not back up ~/$rel"
+}
+
+prepare_links() {
+  local pkg rel src t part p
+  for pkg in "${PKGS[@]}"; do
+    while IFS= read -r rel; do
+      src=$REPO/home/$pkg/$rel
+      t=$HOME/$rel
+      # a parent folder linked into the repo by the old layout would make stow refuse
+      p=$HOME
+      IFS=/ read -ra parts <<<"$(dirname -- "$rel")"
+      for part in "${parts[@]}"; do
+        [[ $part == . ]] && continue
+        p=$p/$part
+        if is_old_link "$p"; then
+          if ((DRY)); then echo "replace old link ~/${p#"$HOME"/}"; else rm -- "$p"; fi
+        fi
+      done
+      if [[ -L $t && $(link_dest "$t") == "$src" ]]; then continue
+      elif is_old_link "$t"; then
+        if ((DRY)); then echo "replace old link ~/$rel"; else rm -- "$t"; fi
+      elif [[ -L $t && $(link_dest "$t") == "$REPO"/home/* ]]; then
+        :   # stow owns it, restow sorts it out
+      elif [[ -e $t || -L $t ]]; then
+        backup "$rel"
+      fi
+      ((DRY)) && echo "link    ~/$rel -> home/$pkg/$rel"
+    done < <(pkg_files "$pkg")
+  done
+}
+
+# --- system files (copied with sudo, never linked) -----------------------------
+
+sys_files() { (cd "$REPO/system/$1" && find . -type f -printf '%P\n' | sort); }
+excluded() { [[ /$1 == /etc/sudoers.d || /$1 == /etc/sudoers.d/* ]]; }
+
+deny_patterns() { grep -vE '^[[:space:]]*(#|$)' "$REPO/deny.list" 2>/dev/null; }
+
+install_system() {
+  local name rel src dst mode wrote
+  for name in "${SYSS[@]}"; do
+    wrote=0
+    while IFS= read -r rel; do
+      src=$REPO/system/$name/$rel dst=/$rel
+      if excluded "$rel"; then echo "skip    $dst (sudoers.d is never installed)"; continue; fi
+      if [[ -e $dst && ! -r $dst ]]; then echo "skip    $dst (not readable, cannot diff)"; continue; fi
+      cmp -s -- "$src" "$dst" 2>/dev/null && continue
+      diff -u --label "$dst (live)" --label "system/$name/$rel" -- "$( [[ -e $dst ]] && echo "$dst" || echo /dev/null)" "$src"
+      if ((DRY || !TTY)); then echo "(not written: $( ((DRY)) && echo dry run || echo no terminal))"; continue; fi
+      if ask "write $dst?"; then
+        mode=644; [[ -x $src ]] && mode=755
+        sudo install -D -o root -g root -m "$mode" -- "$src" "$dst" || die "could not write $dst"
+        wrote=1
+      fi
+    done < <(sys_files "$name")
+    ((wrote)) && echo "note: $name may need a restart: sudo systemctl restart $name"
+  done
+}
+
+sync_system() {
+  local name rel src dst pat
+  pat=$(deny_patterns)
+  for name in "${SYSS[@]}"; do
+    while IFS= read -r rel; do
+      src=$REPO/system/$name/$rel dst=/$rel
+      excluded "$rel" && continue
+      if [[ ! -e $dst ]]; then echo "system: $dst is missing on this machine"; continue; fi
+      if [[ ! -r $dst ]]; then echo "system: $dst is not readable, skipped"; continue; fi
+      cmp -s -- "$src" "$dst" && continue
+      diff -u --label "system/$name/$rel" --label "$dst (live)" -- "$src" "$dst"
+      if grep -qE -f <(echo "$pat") -- "$dst"; then
+        echo "system: $dst matches deny.list, not copied back"
+        continue
+      fi
+      ask "copy live $dst into the repo?" && cat -- "$dst" >"$src"
+    done < <(sys_files "$name")
+  done
+}
+
+# --- KDE keys (read and written one key at a time, never linked) ----------------
+
+# allow.list lines as rcfile<TAB>group<TAB>key; quotes group words with spaces.
+kde_keys() {
+  local line
+  local -a f
+  [[ -f $REPO/kde/allow.list ]] || return 0
+  grep -vE '^[[:space:]]*(#|$)' "$REPO/kde/allow.list" | while IFS= read -r line; do
+    mapfile -t f < <(xargs printf '%s\n' <<<"$line")
+    if ((${#f[@]} != 3)); then echo "dot: bad kde/allow.list line: $line" >&2; continue; fi
+    printf '%s\t%s\t%s\n' "${f[@]}"
+  done
+}
+
+# kcfg read FILE GROUP KEY  |  kcfg write FILE GROUP KEY VALUE
+kcfg() {
+  local g
+  local -a gs args=(--file "$2")
+  IFS=/ read -ra gs <<<"$3"
+  for g in "${gs[@]}"; do args+=(--group "$g"); done
+  args+=(--key "$4")
+  if [[ $1 == read ]]; then kreadconfig6 "${args[@]}" --default "$ABSENT"
+  else kwriteconfig6 "${args[@]}" -- "$5"
+  fi
+}
+
+install_kde() {
+  local rc grp key rv lv n=0
+  while IFS=$'\t' read -r rc grp key; do
+    rv=$(kcfg read "$REPO/kde/$rc" "$grp" "$key")
+    [[ $rv == "$ABSENT" ]] && continue
+    lv=$(kcfg read "$rc" "$grp" "$key")
+    [[ $lv == "$rv" ]] && continue
+    if ((DRY)); then echo "kde     $rc [$grp] $key would change"; continue; fi
+    kcfg write "$rc" "$grp" "$key" "$rv" || die "could not write $rc [$grp] $key"
+    ((n++))
+  done < <(kde_keys)
+  ((n)) && echo "kde: wrote $n key(s). Log out and back in, or the running session may write the old values back."
+}
+
+sync_kde() {
+  local rc grp key v
+  local -A fresh=()
+  while IFS=$'\t' read -r rc grp key; do
+    # rebuilt from scratch each sync, so a key dropped from allow.list leaves the repo too
+    [[ -n ${fresh[$rc]:-} ]] || { rm -f -- "$REPO/kde/$rc"; fresh[$rc]=1; }
+    v=$(kcfg read "$rc" "$grp" "$key")
+    if [[ $v == "$ABSENT" ]]; then echo "kde: $rc [$grp] $key is not set on this machine, skipped"; continue; fi
+    kcfg write "$REPO/kde/$rc" "$grp" "$key" "$v" || die "could not write kde/$rc"
+  done < <(kde_keys)
+}
+
+# --- commands -----------------------------------------------------------------
+
+cmd_install() {
+  local arg prof="" sub n
+  DRY=0
+  for arg in "$@"; do
+    case $arg in
+      -n) DRY=1 ;;
+      desktop | server) prof=$arg ;;
+      *) echo "dot: unknown install argument '$arg'" >&2; usage >&2; exit 2 ;;
+    esac
+  done
+  resolve_profile "$prof"
+  ((${#BAD[@]})) && die "profile names a folder that does not exist: ${BAD[*]}"
+  BK_BASE=$HOME/.dotfiles-backup/$(date +%F-%H%M%S)
+  ((DRY)) && echo "dry run, profile $PROFILE: nothing is changed"
+
+  if ((DRY)); then
+    echo "would set core.hooksPath=hooks and save profile $PROFILE"
+  else
+    echo "$PROFILE" >"$PROFILE_FILE"
+    git -C "$REPO" config core.hooksPath hooks
+  fi
+
+  # only the submodules this profile uses: a root submodule it names, or one inside its packages
+  while IFS= read -r sub; do
+    for n in "${SUBS[@]}" "${PKGS[@]/#/home/}"; do
+      [[ $sub == "$n" || $sub == "$n"/* ]] || continue
+      if ((DRY)); then echo "init    submodule $sub"; else git -C "$REPO" submodule update --init -- "$sub" || die "submodule $sub failed"; fi
+      break
+    done
+  done < <(submodule_paths)
+
+  prepare_links
+  if ((${#PKGS[@]})) && ! ((DRY)); then
+    stow -R --no-folding -d "$REPO/home" -t "$HOME" "${PKGS[@]}" || die "stow refused, see above"
+    echo "linked: ${PKGS[*]}"
+  fi
+  [[ -n ${BK:-} ]] && ! ((DRY)) && echo "moved existing files to $BK"
+
+  install_system
+  [[ $PROFILE == desktop ]] && install_kde
+  return 0
+}
+
+cmd_status() {
+  resolve_profile ""
+  local problems=0 pkg rel total linked l d owner n rc grp key name src dst
+  local -a dirs files=()
+  local -A inprof=()
+
+  for pkg in "${PKGS[@]}"; do inprof[$pkg]=1; done
+  for n in "${BAD[@]}"; do echo "profile: '$n' has no folder under home/ or system/ and is no submodule"; ((problems++)); done
+  while IFS= read -r n; do echo "profile: '$n' is listed more than once"; ((problems++)); done \
+    < <({ list_names server; list_names desktop; } | sort | uniq -d)
+
+  for pkg in "${PKGS[@]}"; do
+    total=0 linked=0
+    while IFS= read -r rel; do
+      ((total++))
+      if [[ -L $HOME/$rel && $(link_dest "$HOME/$rel") == "$REPO/home/$pkg/$rel" ]]; then ((linked++))
+      else files+=("home/$pkg/$rel")
+      fi
+    done < <(pkg_files "$pkg")
+    if ((linked == total)); then echo "$pkg: linked"
+    elif ((linked == 0)); then echo "$pkg: not linked"; ((problems++))
+    else echo "$pkg: partial ($linked/$total)"; ((problems++))
+    fi
+  done
+  for rel in "${files[@]}"; do echo "  no link: $rel"; done
+
+  # the same file in two packages
+  while IFS= read -r rel; do echo "package: ~/$rel is in more than one package"; ((problems++)); done < <(
+    for pkg in "$REPO"/home/*/; do [[ -d $pkg ]] && pkg_files "$(basename "$pkg")"; done | sort | uniq -d)
+
+  # links into the repo: look in ~ and in every folder any package mirrors
+  mapfile -t dirs < <({ echo; for pkg in "$REPO"/home/*/; do
+    [[ -d $pkg ]] && (cd "$pkg" && find . -mindepth 1 -type d -not -path '*/.git/*' -not -name .git -printf '%P\n'); done; } | sort -u)
+  while IFS= read -r l; do
+    d=$(link_dest "$l")
+    [[ $d == "$REPO"/* ]] || continue
+    if [[ ! -e $d ]]; then echo "broken link: ${l/#$HOME/\~} -> ${d#"$REPO"/}"; ((problems++)); continue; fi
+    [[ $d == "$REPO"/home/* ]] || { echo "old layout link: ${l/#$HOME/\~}"; continue; }
+    owner=${d#"$REPO"/home/}; owner=${owner%%/*}
+    [[ -n ${inprof[$owner]:-} ]] || { echo "orphan link: ${l/#$HOME/\~} (package $owner is not in profile $PROFILE)"; ((problems++)); }
+  done < <(for d in "${dirs[@]}"; do d=$HOME${d:+/$d}; [[ -d $d && ! -L $d ]] && find "$d" -mindepth 1 -maxdepth 1 -type l; done | sort -u)
+
+  for name in "${SYSS[@]}"; do
+    while IFS= read -r rel; do
+      src=$REPO/system/$name/$rel dst=/$rel
+      excluded "$rel" && continue
+      if [[ ! -e $dst ]]; then echo "system: $dst is missing"; ((problems++))
+      elif [[ ! -r $dst ]]; then echo "system: $dst is not readable"; ((problems++))
+      elif ! cmp -s -- "$src" "$dst"; then echo "system: $dst differs from system/$name/$rel"; ((problems++))
+      fi
+    done < <(sys_files "$name")
+  done
+
+  if [[ $PROFILE == desktop ]]; then
+    while IFS=$'\t' read -r rc grp key; do
+      [[ $(kcfg read "$REPO/kde/$rc" "$grp" "$key") == "$(kcfg read "$rc" "$grp" "$key")" ]] && continue
+      echo "kde: $rc [$grp] $key differs from the repo"; ((problems++))
+    done < <(kde_keys)
+  fi
+
+  ((problems)) && { echo "$problems problem(s)"; return 1; }
+  echo "all good"
+}
+
+cmd_sync() {
+  resolve_profile ""
+  local -a scope=() staged untracked
+  local d p sub raw msg
+
+  cd "$REPO" || die "cannot enter $REPO"
+  for d in "${SCOPE[@]}"; do [[ -e $d ]] && scope+=("$d"); done
+
+  # anything already staged outside the sync folders would ride along in the commit
+  mapfile -t staged < <(git diff --cached --name-only -- . "${scope[@]/#/:(exclude)}")
+  ((${#staged[@]})) && die "staged changes outside sync scope, commit or unstage them first: ${staged[*]}"
+
+  [[ $PROFILE == desktop ]] && sync_kde
+  sync_system
+
+  git add -u -- "${scope[@]}" || die "git add failed"
+
+  mapfile -t untracked < <(git ls-files -o --exclude-standard -- "${scope[@]}")
+  if ((${#untracked[@]})); then
+    printf 'new file: %s\n' "${untracked[@]}"
+    if ask "add these ${#untracked[@]} new file(s)?"; then git add -- "${untracked[@]}" || die "git add failed"; fi
+  fi
+
+  # a submodule pointer only goes in when the submodule is clean and its commit is on its remote
+  while IFS=$'\t' read -r raw sub; do
+    [[ $raw == *" 160000 "* ]] || continue
+    if [[ -z $(git -C "$sub" status --porcelain) && -n $(git -C "$sub" branch -r --contains HEAD 2>/dev/null) ]]; then continue; fi
+    git reset -q -- "$sub"
+    echo "submodule $sub: not staged, it has uncommitted changes or a commit missing from its remote"
+  done < <(git diff --cached --raw --no-renames)
+
+  mapfile -t untracked < <(git status --porcelain -- . "${scope[@]/#/:(exclude)}" | cut -c4-)
+  ((${#untracked[@]})) && printf 'outside sync scope, commit by hand: %s\n' "${untracked[@]}"
+
+  mapfile -t staged < <(git diff --cached --name-only)
+  if ((${#staged[@]} == 0)); then echo "nothing to commit"; return 0; fi
+  msg="sync: ${staged[*]:0:5}"
+  ((${#staged[@]} > 5)) && msg+=" (+$((${#staged[@]} - 5)) more)"
+  git commit -q -m "$msg" || die "commit failed"
+  git show --stat --format='%h %s' HEAD
+  if ask "push?"; then git push || die "push rejected, pull and resolve by hand"; fi
+  return 0
+}
+
+case ${1:-} in
+  install) shift; cmd_install "$@" ;;
+  sync) [[ $# -eq 1 ]] || { usage >&2; exit 2; }; cmd_sync ;;
+  status) [[ $# -eq 1 ]] || { usage >&2; exit 2; }; cmd_status ;;
+  -h | --help) usage ;;
+  *) usage >&2; exit 2 ;;
+esac

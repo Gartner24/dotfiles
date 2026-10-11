@@ -1,0 +1,38 @@
+#!/usr/bin/env bash
+# Refuse a commit that adds a line, or a file path, matching deny.list.
+# Enabled by `dot install` (core.hooksPath=hooks). Skippable with --no-verify, on purpose.
+set -euo pipefail
+
+root=$(git rev-parse --show-toplevel)
+tmp=$(mktemp -d)
+trap 'rm -rf "$tmp"' EXIT
+
+grep -vE '^[[:space:]]*(#|$)' "$root/deny.list" >"$tmp/pat" 2>/dev/null || true
+if [[ ! -s $tmp/pat ]]; then
+  echo "pre-commit: deny.list is missing or empty, refusing to commit" >&2
+  exit 1
+fi
+
+# Two parallel files: where each added line sits (loc) and what it says (con).
+# deny.list itself is exempt; binaries show no '+' lines; submodule pointers are ignored.
+git -C "$root" diff --cached -U0 --no-color --no-ext-diff --ignore-submodules -- . ':(exclude)deny.list' |
+  awk -v L="$tmp/loc" -v C="$tmp/con" '
+    /^diff --git / { h = 1; next }
+    h && /^\+\+\+ / { f = substr($0, 7); next }
+    /^@@ / { h = 0; split($3, a, ","); n = substr(a[1], 2); next }
+    !h && /^\+/ { print f ":" n > L; print substr($0, 2) > C; n++ }'
+
+# Added and renamed file paths, so a history or key file is caught by its name.
+git -C "$root" diff --cached --name-only --diff-filter=AR --ignore-submodules -- . ':(exclude)deny.list' |
+  while IFS= read -r p; do
+    printf '%s:(path)\n' "$p" >>"$tmp/loc"
+    printf '%s\n' "$p" >>"$tmp/con"
+  done
+
+[[ -s $tmp/con ]] || exit 0
+grep -nE -f "$tmp/pat" "$tmp/con" | cut -d: -f1 >"$tmp/hit" || true
+[[ -s $tmp/hit ]] || exit 0
+
+echo "pre-commit: $(wc -l <"$tmp/hit") added line(s) match deny.list, commit refused:" >&2
+awk 'NR == FNR { hit[$1] = 1; next } FNR in hit { print "  " $0 }' "$tmp/hit" "$tmp/loc" >&2
+exit 1

@@ -1,0 +1,3 @@
+[kwin]
+Window Maximize=Meta+Up\tMeta+PgUp,Meta+PgUp,Maximize Window
+Window Quick Tile Top=none,Meta+Up,Quick Tile Window to the Top
