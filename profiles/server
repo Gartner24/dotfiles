@@ -8,3 +8,7 @@ zsh
 starship
 # Neovim config, a submodule of Gartner24/nvim.lua inside the package
 nvim
+# .gitconfig (store helper only for gitlab.freedesktop.org) and the global ignore
+git
+# mise global tools (node 24)
+mise

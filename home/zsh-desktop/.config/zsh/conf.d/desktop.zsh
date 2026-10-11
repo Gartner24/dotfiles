@@ -40,7 +40,6 @@ copykey() { wl-copy --sensitive --paste-once }
 if [ -n "$DISPLAY" ] || [ -n "$WAYLAND_DISPLAY" ]; then
   alias explorer='xdg-open'
   alias figma='figma-linux --enable-features=UseOzonePlatform --ozone-platform=wayland'
-  alias zed='zeditor'
 fi
 
 # ── Arch-only ─────────────────────────────────────────────────────────────────

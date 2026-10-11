@@ -13,6 +13,7 @@
 
 # credential files
 ^([^ ="']*/)?\.git-credentials$
+^([^ ="']*/)?\.config/gh/hosts\.yml$
 ^([^ ="']*/)?\.config/claude-fb/keys\.env$
 
 # token prefixes

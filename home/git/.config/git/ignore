@@ -1,0 +1,6 @@
+**/.claude/settings.local.json
+.gstack/
+jjstack/
+.superpowers/
+.design/run*.json
+.workflow/

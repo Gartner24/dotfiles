@@ -13,3 +13,8 @@ ghostty
 alacritty
 # desktop only scripts (tmux-zen for now, the rest come with feature 5)
 bin-desktop
+
+# CLI tools used only on the desktop (feature 6); easyeffectsrc stays out, it is window state
+tealdeer
+yt-dlp
+easyeffects

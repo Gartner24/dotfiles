@@ -35,7 +35,7 @@ _These are recommendations to keep your build orderly, not requirements. Skip an
 | 14 | Starship prompt | Slice 1 | done |
 | 4 | Terminals and editor | Slice 2 | done |
 | 5 | Personal scripts | Slice 3 | done |
-| 6 | CLI tool configs | Slice 4 | planned |
+| 6 | CLI tool configs | Slice 4 | in-progress |
 | 7 | KDE settings | Slice 5 | planned |
 | 8 | KDE extras | Slice 6 | planned |
 | 9 | System files | Slice 7 | planned |
@@ -137,11 +137,12 @@ Spec: [0002](../specs/0002-program-inventory/index.md) (the `bin-desktop` row), 
 
 ## Slice 4: CLI tool configs
 
-### 6. CLI tool configs
+### 6. CLI tool configs · in-progress
 The tuned CLI tools from the inventory (git, mise, tealdeer, yt-dlp, easyeffects presets), each in its own folder, with token files excluded. yazi, btop and mpv have nothing tuned to track.
 **Done when:** each tool reads its config from the repo, and no credential file (`.git-credentials`, gh tokens) is tracked.
-Spec: [0002](../specs/0002-program-inventory/index.md) (scoped git credential helper, AC-7; drop the `zed` alias from `.zshrc`)
-- [ ] Build it: `/develop CLI tool configs`
+Spec: [0002](../specs/0002-program-inventory/index.md) (scoped git credential helper, AC-7; drop the `zed` alias, which lived in `desktop.zsh`), code in `home/git/`, `home/mise/` (server), `home/tealdeer/`, `home/yt-dlp/`, `home/easyeffects/` (desktop), `deny.list` (gh `hosts.yml`)
+- [x] Build it: `/develop CLI tool configs`
+- [ ] Verify it: `/check verify CLI tool configs`
 
 ## Slice 5: KDE settings
 
@@ -170,6 +171,7 @@ Mac Dock plasmoid, real-app-icons and its pacman hook, wallpapers, aurorae and c
 Turn the install list from the inventory (programs you actually use, not just the configured ones) into files the install script reads, split into desktop and server, and into pacman, AUR and flatpak.
 **Done when:** install on a new desktop offers every program on the install list, install on a server offers only server items, and sync flags programs installed since the list was last reviewed.
 Spec: [0002](../specs/0002-program-inventory/index.md) (the install list and its Follow-up: yay first, Plasma without `discover`), [0003](../specs/0003-server-profile.md) (the server mapping table and its Follow-up: full Oh My Zsh only on desktop, sparse `omz-git` checkout on servers, `chsh` to zsh)
+The gh credential helper is hardcoded to `/usr/bin/gh`; where gh comes from mise (Ubuntu 22.04), use `!gh auth git-credential` from PATH.
 - [ ] Build it: `/develop package list and bootstrap`
 
 ## Slice 9: README and architecture docs
