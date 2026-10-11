@@ -6,6 +6,8 @@ script. Source: your message on 2026-10-11.
 
 **Build approach:** Tracer Bullet (move one program all the way through the new layout, install and sync first, then repeat for the rest).
 **Workflow:** Alpha (after `/develop`, run `/check verify` on the real machine: links resolve, the shell starts, KDE still looks right). `/architect` is the recommended first stop for a feature with a real decision, but skippable when you already know the build. Any feature can carry its own tag to do more or less.
+**Source of truth:** scope
+**Autopilot:** off
 
 **Decisions already made (your answers, 2026-10-11):**
 - Coverage: configs you tuned yourself, plus a package list for every installed program. App state (browsers, chat apps, Spotify) stays out. You get a list of every program left behind so you can pull any of them in.
@@ -29,7 +31,7 @@ _These are recommendations to keep your build orderly, not requirements. Skip an
 | 1 | Repo layout and linking method | Foundation | in-progress |
 | 2 | Program inventory | Foundation | done |
 | 3 | zsh through the new layout | Slice 1 | done |
-| 13 | Server profile | Slice 1 | in-progress |
+| 13 | Server profile | Slice 1 | done |
 | 14 | Starship prompt | Slice 1 | done |
 | 4 | Terminals and editor | Slice 2 | done |
 | 5 | Personal scripts | Slice 3 | done |
@@ -82,7 +84,7 @@ Spec: [0002](../specs/0002-program-inventory/index.md)
 - [x] Build it: `/develop program inventory`
   - [x] Coverage check and profile cross check (AC-1, AC-3, AC-4, AC-5, AC-6, AC-7)
   - [x] You review the three lists (AC-2, AC-8)
-- [ ] Verify it: `/check verify program inventory` (skipped: you reviewed the lists and marked it done, 2026-10-11)
+- [x] Verify it: `/check verify program inventory` (you reviewed the lists and marked it done, 2026-10-11) · skipped
 
 ## Slice 1: zsh through the new layout
 
@@ -94,18 +96,18 @@ Spec: [0001](../specs/0001-repo-layout-linking/index.md), code in `home/zsh/`
 - [x] Build it: `/develop zsh through the new layout`
 - [x] Verify it: `/check verify zsh through the new layout`
 
-### 13. Server profile · in-progress
+### 13. Server profile · done
 A lean profile for VPS, VDS and headless servers: a fast zsh with no GUI configs, no fastfetch, no startup tips or shortcut panels, no tmux, and the same scripts installing only server items.
 **Done when:** a dry run on a server installs only server items, a new shell there starts noticeably faster than on the desktop (measured with hyperfine), and nothing GUI related is linked.
 Arch, Debian 12+ and Ubuntu 22.04+. Package installing itself is built by feature 10 from the spec's mapping table.
 Spec: [0003](../specs/0003-server-profile.md), code in `home/zsh/`, `home/zsh-desktop/`, `profiles/desktop`, `tests/server-profile.sh`
 - [x] Design it (spec): `/architect server profile`
-- [ ] Build it: `/develop server profile`
+- [x] Build it: `/develop server profile`
   - [x] zsh split into `zsh-desktop`, desktop unchanged (AC-2, AC-12)
   - [x] Server shell path: distro plugins, sparse git aliases, guarded aliases, Debian names, `freeram` and `up` (AC-3, AC-4, AC-5, AC-6)
   - [x] Container test on six images with the startup ratio (AC-1, AC-7, AC-8, AC-11)
   - [x] Mapping table verified with `apt-cache policy`, mise fallback check (AC-9, AC-10)
-- [ ] Verify it: `/check verify server profile`
+- [x] Verify it: `/check verify server profile`
 
 ### 14. Starship prompt · done
 Try Starship in place of Powerlevel10k on both profiles, keeping the p10k config around until you decide.
@@ -167,7 +169,7 @@ Mac Dock plasmoid, real-app-icons and its pacman hook, wallpapers, aurorae and c
 ### 10. Package list and bootstrap
 Turn the install list from the inventory (programs you actually use, not just the configured ones) into files the install script reads, split into desktop and server, and into pacman, AUR and flatpak.
 **Done when:** install on a new desktop offers every program on the install list, install on a server offers only server items, and sync flags programs installed since the list was last reviewed.
-Spec: [0002](../specs/0002-program-inventory/index.md) (the install list and its Follow-up: yay first, Plasma without `discover`)
+Spec: [0002](../specs/0002-program-inventory/index.md) (the install list and its Follow-up: yay first, Plasma without `discover`), [0003](../specs/0003-server-profile.md) (the server mapping table and its Follow-up: full Oh My Zsh only on desktop, sparse `omz-git` checkout on servers, `chsh` to zsh)
 - [ ] Build it: `/develop package list and bootstrap`
 
 ## Slice 9: README and architecture docs

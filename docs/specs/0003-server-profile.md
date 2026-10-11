@@ -1,7 +1,7 @@
 # 0003. Server profile: distros, zsh split and package mapping
 
 **Date**: 2026-10-11
-**Status**: In Progress
+**Status**: Accepted
 
 ## Summary
 
@@ -197,6 +197,7 @@ Tracer Bullet: prove the split on the real desktop first, then run one container
 
 - [ ] Feature 10: install the full Oh My Zsh and its three plugins only on the desktop profile. Servers get the two distro plugin packages plus a sparse checkout of `ohmyzsh/ohmyzsh` at `~/.local/share/omz-git` holding only `lib/git.zsh` and `plugins/git/`.
 - [ ] Feature 10: set zsh as the login shell (`chsh`) in the bootstrap, since stock servers default to bash.
+- [ ] Feature 10: version floors for zoxide (apt 0.4.3 on Debian 12 and Ubuntu 22.04) and gh (apt 2.4.0 on Ubuntu 22.04); use mise when apt is older.
 - [ ] Spec 0001 AC-16: when claude-config lands in `dot`, add a headless `dot install server -n` run to `tests/server-profile.sh` (its checks need node, python3 and jq). This closes spec 0001's feature 13 Follow-up together with the stow row in the table.
 
 ## References

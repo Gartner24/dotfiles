@@ -1,7 +1,7 @@
 # dotfiles
 
 Personal Linux config with two profiles: desktop (Arch, KDE Plasma 6 on Wayland) and a lean
-headless server profile (planned, see `docs/scope/scope.md`). `install.sh` still has an old Ubuntu/WSL path. Public repo: `github.com/Gartner24/dotfiles`.
+headless server profile for Arch, Debian 12+ and Ubuntu 22.04+ (spec 0003; its package install comes with feature 10, see `docs/scope/scope.md`). `install.sh` still has an old Ubuntu/WSL path. Public repo: `github.com/Gartner24/dotfiles`.
 
 ## Stack
 
@@ -35,6 +35,10 @@ zsh -n home/zsh/.zshrc
 ```bash
 # Test dot against a throwaway repo and HOME (touches nothing real)
 tests/dot-status.sh
+
+# Server profile in archlinux, debian:12/13, ubuntu:22.04/24.04/26.04 containers
+# (needs docker and network; exits 2 without docker; one image: tests/server-profile.sh debian:12)
+tests/server-profile.sh
 ```
 
 No CI.
@@ -54,6 +58,10 @@ No CI.
 - The repo is public: never commit keys, tokens, `~/.config/claude-fb/keys.env`, history files,
   or machine state (caches, window positions, recent files).
 - Comments in `home/zsh/.zshrc` explain why a setting exists (often a past failure); keep that style.
+- `home/zsh/.zshrc` is shared with servers (spec 0003): no desktop programs, GUI variables or
+  `/home/santiago` paths in it. Desktop shell config goes in `home/zsh-desktop/.config/zsh/conf.d/desktop.zsh`
+  (Oh My Zsh only in `conf.d/early/omz.zsh`), and an alias is set only when its tool is on PATH.
+  After moving shell config, compare the full `alias`, `functions` and `print -l $path` output before and after.
 - Shell functions that touch the system ask before destructive steps (`read -q`), see `wtclean`, `freeram`.
 - `kde/real-app-icons.hook` installs to `/etc/pacman.d/hooks/` with sudo (Arch only).
 
