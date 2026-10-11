@@ -24,7 +24,7 @@ _Steps come from the spec 0001 acceptance criteria. `/check verify` runs them an
 - [x] (tty) After a sync commit, answer N to push: nothing pushed. Answer y with a rejected push: error shown, exit 1, no pull. -> AC-10
 - [x] Append a comment to `system/keyd/etc/keyd/default.conf`: `./dot install -n` shows the diff, writes nothing; `./dot status` reports drift. -> AC-7
 - [x] (tty) Real install, answer y: `/etc/keyd/default.conf` is root:root 644, and the restart hint for keyd is printed. Answer N: nothing written. -> AC-7
-- [x] (tty) Edit `/etc/keyd/default.conf` live, `./dot sync`: drift shown, asks before copying back. Put `psk=x` in it: refused as a deny.list match. -> AC-7
+- [x] (tty) Edit `/etc/keyd/default.conf` live, `./dot sync`: drift shown, asks before copying back. Put a wifi psk assignment in it: refused as a deny.list match. -> AC-7
 - [x] With a key in `[kwin]` of `~/.config/kglobalshortcutsrc` that is not in `kde/allow.list`, `./dot sync`: `kde/kglobalshortcutsrc` holds only the two listed keys. -> AC-8
 - [x] Change `Window Maximize` live: status reports it, `./dot install` writes the repo value back and prints the log out notice. -> AC-8
 

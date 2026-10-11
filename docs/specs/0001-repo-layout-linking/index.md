@@ -101,7 +101,7 @@ docs/                    # specs and scope, never linked
 - No commit stages a submodule pointer to a commit missing from that submodule's remote.
 - Every program is in exactly one package; every package is in at most one profile list.
 
-**Security model**: the repo is public. `deny.list` starts with history file names, `.git-credentials`, `~/.config/claude-fb/keys.env`, token prefixes (`ghp_`, `gho_`, `github_pat_`, `AKIA`, `xox[bp]-`, `sk-ant-`), private key headers (`-----BEGIN .*PRIVATE KEY-----`), and wifi or wireguard secret keys (`psk=`, `PrivateKey`). System files are written only with `sudo install` after you see the diff, and copied back only after a deny scan. KDE is safe by construction: only named keys are ever read. The hook is the last line of defense; it can be skipped with `--no-verify` and is absent on a clone until `dot install` runs, both accepted.
+**Security model**: the repo is public. `deny.list` starts with history file names, `.git-credentials`, `~/.config/claude-fb/keys.env`, token prefixes (`ghp_`, `gho_`, `github_pat_`, `AKIA`, `xox[bp]-`, `sk-ant-`), private key headers (`-----BEGIN .*PRIVATE KEY-----`), and wifi or wireguard secret keys (a `psk` or `PrivateKey` assignment). System files are written only with `sudo install` after you see the diff, and copied back only after a deny scan. KDE is safe by construction: only named keys are ever read. The hook is the last line of defense; it can be skipped with `--no-verify` and is absent on a clone until `dot install` runs, both accepted.
 
 **Configuration required**: none (no env vars). New tool: GNU Stow, from the distro package manager on every profile.
 
