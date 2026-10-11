@@ -31,7 +31,7 @@ _These are recommendations to keep your build orderly, not requirements. Skip an
 | 3 | zsh through the new layout | Slice 1 | done |
 | 13 | Server profile | Slice 1 | planned |
 | 14 | Starship prompt | Slice 1 | planned |
-| 4 | Terminals and editor | Slice 2 | in-progress |
+| 4 | Terminals and editor | Slice 2 | done |
 | 5 | Personal scripts | Slice 3 | planned |
 | 6 | CLI tool configs | Slice 4 | planned |
 | 7 | KDE settings | Slice 5 | planned |
@@ -106,13 +106,13 @@ Try Starship in place of Powerlevel10k on both profiles, keeping the p10k config
 
 ## Slice 2: Terminals and editor
 
-### 4. Terminals and editor (in-progress)
+### 4. Terminals and editor (done)
 Move tmux (with `tmux-zen`), Ghostty, Alacritty and the nvim submodule into their folders through the same path.
 **Done when:** each program starts with its config from the new location and the nvim submodule still updates from its own repo.
 `tmux-zen` went into `home/bin-desktop` (spec 0002); feature 5 adds the other desktop scripts there. The old nvim clone is in `~/.dotfiles-backup/2026-10-11-nvim-clone/` after its work was pushed (your call, 2026-10-11).
 Spec: [0001](../specs/0001-repo-layout-linking/index.md) (AC-11, AC-12), code in `home/tmux/`, `home/ghostty/`, `home/alacritty/`, `home/bin-desktop/`, `home/nvim/`
 - [x] Build it: `/develop terminals and editor`
-- [ ] Verify it: `/check verify terminals and editor`
+- [x] Verify it: `/check verify terminals and editor`
 
 ## Slice 3: Personal scripts
 

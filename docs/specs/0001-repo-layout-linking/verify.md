@@ -59,10 +59,10 @@ _Done during /develop on this machine unless marked "tty". The sync step ran in 
 - [x] `./dot install server` (sandbox) links `zsh`, so a server gets it too. -> AC-3
 
 ## Feature 4: terminals and editor · updated 2026-10-11
-- [ ] (tty) Open tmux: prefix r reloads the config, prefix | splits through `tmux-zen`. -> AC-2, AC-12
-- [ ] (tty) Open Ghostty and Alacritty: both start with Gruvbox Dark Hard and no config errors. -> AC-2
-- [ ] `nvim` opens with no errors; `readlink -f ~/.config/nvim/init.lua` points into `home/nvim/.config/nvim`. -> AC-11
-- [ ] `git -C home/nvim/.config/nvim pull` updates from `Gartner24/nvim.lua`; `./dot sync` refuses an unpushed pointer. -> AC-10, AC-11
-- [ ] `./dot install server -n` lists no tmux, ghostty, alacritty or bin-desktop item. -> AC-3, AC-12
-- [ ] `install.sh` and `sync-to-github.sh` no longer link, copy or clone tmux, ghostty, alacritty or nvim. -> AC-1
-- [ ] `./dot status` reports all six packages `linked`. -> AC-14
+- [x] (tty) Open tmux: prefix r reloads the config, prefix | splits through `tmux-zen`. -> AC-2, AC-12
+- [x] (tty) Open Ghostty and Alacritty: both start with Gruvbox Dark Hard and no config errors. -> AC-2
+- [x] `nvim` opens with no errors; `readlink -f ~/.config/nvim/init.lua` points into `home/nvim/.config/nvim`. -> AC-11
+- [x] `git -C home/nvim/.config/nvim pull` updates from `Gartner24/nvim.lua`; `./dot sync` refuses an unpushed pointer. -> AC-10, AC-11
+- [x] `./dot install server -n` lists no tmux, ghostty, alacritty or bin-desktop item. -> AC-3, AC-12
+- [x] `install.sh` and `sync-to-github.sh` no longer link, copy or clone tmux, ghostty, alacritty or nvim. -> AC-1
+- [x] `./dot status` reports all six packages `linked`. -> AC-14
