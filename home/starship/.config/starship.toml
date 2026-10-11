@@ -1,0 +1,37 @@
+# Starship trial in place of Powerlevel10k (feature 14). Mirrors the p10k lean setup
+# in home/zsh/.p10k.zsh: two lines, path and git on the first with errors, timing and
+# jobs pushed right, the prompt char alone on the second. No language versions: p10k
+# only showed them for version managers this machine does not use.
+add_newline = false
+format = """
+$directory$git_branch$git_state$git_status$fill$status$cmd_duration$jobs$python$username$hostname
+$character"""
+
+[fill]
+symbol = " "
+
+# p10k showed the full path from ~, not from the repo root
+[directory]
+truncate_to_repo = false
+truncation_length = 8
+fish_style_pwd_dir_length = 1
+
+[git_branch]
+format = "[$symbol$branch(:$remote_branch)]($style) "
+
+# p10k only showed the exit code when the command failed
+[status]
+disabled = false
+format = "[✘ $status]($style) "
+
+# p10k threshold: 3 seconds
+[cmd_duration]
+min_time = 3_000
+format = "[$duration]($style) "
+
+# p10k showed the venv name only, never the python version
+[python]
+format = "[$virtualenv]($style) "
+detect_extensions = []
+detect_files = []
+detect_folders = []

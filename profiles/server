@@ -4,5 +4,7 @@
 
 # .zshrc and .p10k.zsh (Oh My Zsh and its plugins are installed by install.sh)
 zsh
+# prompt on trial in place of p10k (feature 14); .zshrc falls back to p10k without it
+starship
 # Neovim config, a submodule of Gartner24/nvim.lua inside the package
 nvim
