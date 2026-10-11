@@ -1,7 +1,7 @@
 # 0002. Program inventory: config list, left behind list, install list
 
 **Date**: 2026-10-11
-**Status**: Proposed
+**Status**: Accepted
 
 ## Summary
 
@@ -199,7 +199,7 @@ This feature produces lists, not code; features 4, 5, 6, 9 and 10 build from the
 
 **Negative / tradeoffs**:
 - The usage evidence is partial: KDE's launch history only counts launches from the menu, KRunner and task manager, and zsh history misses programs started by other programs. A dropped program you need comes back by hand.
-- `plasma-meta` follows Arch's idea of Plasma, so a new machine gets `discover` and `plasma-systemmonitor`, which this one lacks.
+- `plasma-meta` follows Arch's idea of Plasma, so a new machine gets `discover` and `plasma-systemmonitor`, which this one lacks. `discover` was removed on purpose on 2026-08-07 (`up()` in `home/zsh/.zshrc` covers flatpak updates instead), so feature 10 installs Plasma without both of them.
 - The list is a snapshot of 2026-10-11; feature 10's sync check is what catches later installs.
 - Hardware tags only inform; feature 10 decides how to ask.
 
@@ -211,6 +211,7 @@ This feature produces lists, not code; features 4, 5, 6, 9 and 10 build from the
 - [ ] Scope: update feature 6's row (git, mise, tealdeer, yt-dlp, easyeffects) and link features 5, 6 and 10 to this spec.
 - [ ] Feature 6: remove the `zed='zeditor'` alias from `home/zsh/.zshrc` (Zed was removed on purpose).
 - [ ] Feature 10: install `yay` before AUR entries, and remove the downloaded `cloudflared`, `stripe`, `uv`, `uvx`, `git-filter-repo` from `~/.local/bin` once the packages are in.
+- [ ] Feature 10: install Plasma without `discover` and `plasma-systemmonitor` (for example the `plasma` group minus those two, or remove them right after `plasma-meta`); `discover` was removed on purpose on 2026-08-07.
 - [ ] Feature 10: on this machine, drop the pacman `yt-dlp`, the pipx `numpy` and the dropped KDE apps only when you choose to (this spec changes no installed package).
 - [ ] Feature 13: map the server list to package names on the chosen server distros (`starship`, `mise`, `eza`, `difftastic` are not in every distro's repos).
 - [ ] claude-config: confirm its installer covers the items listed as its own.

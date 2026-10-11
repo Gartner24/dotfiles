@@ -27,7 +27,7 @@ _These are recommendations to keep your build orderly, not requirements. Skip an
 | D | KDE Mac Dock plasmoid and real-app-icons | Existing | existing |
 | E | Old install and sync scripts | Existing | existing |
 | 1 | Repo layout and linking method | Foundation | in-progress |
-| 2 | Program inventory | Foundation | in-progress |
+| 2 | Program inventory | Foundation | done |
 | 3 | zsh through the new layout | Slice 1 | done |
 | 13 | Server profile | Slice 1 | planned |
 | 14 | Starship prompt | Slice 1 | planned |
@@ -74,15 +74,15 @@ Spec: [0001](../specs/0001-repo-layout-linking/index.md), code in `dot`, `deny.l
   - [ ] claude-config as a submodule, called by dot install and sync (AC-16), after its branch is merged
 - [x] Verify it: `/check verify repo layout and linking method`
 
-### 2. Program inventory (in-progress)
+### 2. Program inventory (done)
 Decide which programs get a config folder, which are left behind, and which go on the install list (every program you actually use, a different and longer list than the configured ones).
 **Done when:** you have reviewed three lists (configs included with their files, configs left behind, install list of programs you actually use) and each install list entry is marked desktop, server, or both.
 Spec: [0002](../specs/0002-program-inventory/index.md)
 - [x] Design it (spec): `/architect program inventory`
-- [ ] Build it: `/develop program inventory`
-  - [ ] Coverage check and profile cross check (AC-1, AC-3, AC-4, AC-5, AC-6, AC-7)
-  - [ ] You review the three lists (AC-2, AC-8)
-- [ ] Verify it: `/check verify program inventory`
+- [x] Build it: `/develop program inventory`
+  - [x] Coverage check and profile cross check (AC-1, AC-3, AC-4, AC-5, AC-6, AC-7)
+  - [x] You review the three lists (AC-2, AC-8)
+- [ ] Verify it: `/check verify program inventory` (skipped: you reviewed the lists and marked it done, 2026-10-11)
 
 ## Slice 1: zsh through the new layout
 
