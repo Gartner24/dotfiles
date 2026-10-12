@@ -26,7 +26,8 @@ Run the setup script (creates `dottest`, copies the theme folders, clones the re
 - [ ] Kvantum style on a Qt app (needs the `kvantum` package) -> AC-9
 - [ ] Window buttons on the left with MacTahoe title bars -> AC-9
 - [ ] Inter fonts (needs the Inter font package) -> AC-9
-- [ ] Meta+Up maximizes -> AC-1, AC-9
+- [ ] Meta+Up maximizes right after install, before logging out, and still after the relogin (`busctl --user call org.kde.kglobalaccel /kglobalaccel org.kde.KGlobalAccel shortcut as 4 kwin "Window Maximize" "" ""` prints `ai 2 285212691 285212694`) -> AC-1, AC-9, AC-11
+- [ ] Look at the theme checks only after a full log out and log in (KWin and plasmashell read them at start; `loginctl list-sessions` shows a new session) -> AC-9
 - [ ] Touchpad natural scroll and 0.3 scroll speed -> AC-9
 - [ ] Suspend after 5 minutes on battery (System Settings, Power) -> AC-9
 - [ ] Clipboard keeps one item -> AC-9

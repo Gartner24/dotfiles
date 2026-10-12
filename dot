@@ -271,6 +271,51 @@ apply_theme() { # what value
   esac
 }
 
+# Qt key codes for a kglobalshortcutsrc value's first field, space separated; nothing for
+# none (spec 0004, AC-11). Fails on a key name not in the table.
+# ponytail: no key names with a comma or plus (Ctrl+, Ctrl++), they fail and get the by hand warning.
+qt_keys() {
+  local s p k c code
+  local -a shortcuts parts out=()
+  local -A mods=([Meta]=0x10000000 [Ctrl]=0x04000000 [Alt]=0x08000000 [Shift]=0x02000000)
+  local -A keys=([Esc]=0x01000000 [Tab]=0x01000001 [Return]=0x01000004 [Ins]=0x01000006 [Del]=0x01000007
+    [Print]=0x01000009 [Home]=0x01000010 [End]=0x01000011 [Left]=0x01000012 [Up]=0x01000013
+    [Right]=0x01000014 [Down]=0x01000015 [PgUp]=0x01000016 [PgDown]=0x01000017 [Space]=0x20)
+  s=${1%%,*}
+  [[ $s == none ]] && return 0
+  IFS=$'\t' read -ra shortcuts <<<"$s"
+  for s in "${shortcuts[@]}"; do
+    IFS=+ read -ra parts <<<"$s"
+    k=${parts[-1]} code=0
+    unset 'parts[-1]'
+    for p in "${parts[@]}"; do [[ -n ${mods[$p]:-} ]] || return 1; ((code |= mods[$p])); done
+    if [[ -n ${keys[$k]:-} ]]; then ((code |= keys[$k]))
+    elif [[ $k =~ ^F([1-9]|1[0-2])$ ]]; then ((code |= 0x01000030 + BASH_REMATCH[1] - 1))
+    elif [[ $k =~ ^[A-Za-z0-9]$ ]]; then printf -v c '%d' "'${k^^}"; ((code |= c))
+    else return 1
+    fi
+    out+=("$code")
+  done
+  echo "${out[*]}"
+}
+
+# The running shortcut service (inside KWin on Wayland) keeps every shortcut in memory and
+# writes it back over kglobalshortcutsrc, so a file write alone is lost (spec 0004, AC-11).
+set_shortcut() { # group key value
+  local comp=${1##*/} codes got want
+  local -a c
+  if ! codes=$(qt_keys "$3"); then echo "kde: shortcut $1 $2 did not take, set it in System Settings"; return; fi
+  if ((DRY)); then echo "kde     shortcut $1 $2 would set ${codes:-none}"; return; fi
+  [[ $(busctl --user call org.freedesktop.DBus / org.freedesktop.DBus NameHasOwner s org.kde.kglobalaccel 2>/dev/null) == "b true" ]] || return 0
+  read -ra c <<<"$codes"
+  busctl --user call org.kde.kglobalaccel /kglobalaccel org.kde.KGlobalAccel setForeignShortcut asai \
+    4 "$comp" "$2" "" "" "${#c[@]}" "${c[@]}" >/dev/null 2>&1
+  got=$(busctl --user call org.kde.kglobalaccel /kglobalaccel org.kde.KGlobalAccel shortcut as 4 "$comp" "$2" "" "" 2>/dev/null)
+  want="ai ${#c[@]}${codes:+ $codes}"
+  # KWin reports none both as an empty list and as a single 0
+  [[ $got == "$want" || (-z $codes && $got == "ai 1 0") ]] || echo "kde: shortcut $1 $2 did not take, set it in System Settings"
+}
+
 install_kde() {
   local rc grp key rv lv what deco a n=0 warned=0
   local -a apply=()
@@ -288,8 +333,13 @@ install_kde() {
       ((warned++)) || echo "kde: decoration theme $deco is not installed, skipped"
       continue
     fi
-    if ((DRY)); then echo "kde     $rc [$grp] $key would change"; continue; fi
+    if ((DRY)); then
+      echo "kde     $rc [$grp] $key would change"
+      [[ $rc == kglobalshortcutsrc ]] && set_shortcut "$grp" "$key" "$rv"
+      continue
+    fi
     kcfg write "$rc" "$grp" "$key" "$rv" || die "could not write $rc [$grp] $key"
+    [[ $rc == kglobalshortcutsrc ]] && set_shortcut "$grp" "$key" "$rv"
     ((n++))
   done < <(kde_keys)
   ((n)) && echo "kde: wrote $n key(s). Log out and back in, or the running session may write the old values back."

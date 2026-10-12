@@ -7,7 +7,8 @@ set -uo pipefail
 SRC=$(dirname "$(readlink -f "$0")")/..
 T=$(mktemp -d)
 trap 'rm -rf "$T"' EXIT
-export HOME=$T/home GIT_CONFIG_GLOBAL=$T/gitconfig
+# a dead session bus: nothing here may reach the live KWin or Plasma (spec 0004, AC-11)
+export HOME=$T/home GIT_CONFIG_GLOBAL=$T/gitconfig DBUS_SESSION_BUS_ADDRESS=unix:path=$T/nobus
 git config --global user.name test
 git config --global user.email test@example.com
 git config --global protocol.file.allow always
@@ -150,6 +151,27 @@ install_out "missing scheme skipped" "kde: colorscheme theme NoSuchScheme is not
 if env -u DISPLAY -u WAYLAND_DISPLAY ./dot install desktop >/dev/null 2>&1 </dev/null && ! grep -qs kdecoration2 "$C/kwinrc" && ! grep -qs ColorScheme "$C/kdeglobals"; then
   echo "ok   no session: install exits 0, no decoration keys, no plain ColorScheme write"
 else echo "FAIL no session: install failed, or wrote decoration keys or a plain ColorScheme"; fail=1
+fi
+
+# --- shortcuts through D-Bus (spec 0004, AC-11); key codes checked live against KWin on 2026-10-11
+cat >>kde/allow.list <<'EOF'
+kglobalshortcutsrc plasmashell "previous activity"
+kglobalshortcutsrc kwin "Window Quick Tile Top"
+kglobalshortcutsrc kwin "Odd Key"
+EOF
+R=$T/kde/kde/kglobalshortcutsrc
+kwriteconfig6 --file "$R" --group kwin --key "Window Maximize" -- $'Meta+Up\tMeta+PgUp,Meta+PgUp,Maximize Window'
+kwriteconfig6 --file "$R" --group kwin --key "Window Quick Tile Top" -- 'none,Meta+Up,Quick Tile Window to the Top'
+kwriteconfig6 --file "$R" --group kwin --key "Odd Key" -- 'Meta+Hyper,none,Odd'
+kwriteconfig6 --file "$R" --group plasmashell --key "previous activity" -- 'Meta+Shift+A,none,Walk through activities (Reverse)'
+install_out "tab separated pair to key codes" "kde     shortcut kwin Window Maximize would set 285212691 285212694"
+install_out "Meta+Shift+A to a key code" "kde     shortcut plasmashell previous activity would set 301989953"
+install_out "none to an empty list" "kde     shortcut kwin Window Quick Tile Top would set none"
+install_out "unknown key name warned" "kde: shortcut kwin Odd Key did not take, set it in System Settings"
+if ./dot install desktop >/dev/null 2>&1 </dev/null &&
+  [[ $(kreadconfig6 --file kglobalshortcutsrc --group plasmashell --key "previous activity") == Meta+Shift+A,* ]]; then
+  echo "ok   no shortcut service: install exits 0 and writes the file"
+else echo "FAIL no shortcut service: install failed or did not write the file"; fail=1
 fi
 
 exit $fail
