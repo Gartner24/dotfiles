@@ -56,3 +56,7 @@ Theme picks are different from other keys because KDE derives many other keys fr
 
 Panels stay with feature 8 because `plasma-org.kde.plasma.desktop-appletsrc` is keyed by numeric containment IDs that a fresh machine does not share; the theme repo's layout script (0001, AC-13) is the right tool for that.
 
+
+### Update 2026-10-11: shortcuts through D-Bus (AC-11)
+
+The first AC-9 run showed the running KWin putting both `kwin` shortcuts back to their defaults while the session was still open: on Wayland the shortcut service lives inside KWin, keeps every shortcut in memory, and writes that whole set over `kglobalshortcutsrc` whenever it saves. A file write alone can never win while KWin runs, and logging out makes it save its old copy. Options weighed: tell the service over D-Bus (chosen by you), install shortcuts only from a TTY with Plasma logged out (a manual step on every machine), or set the five shortcuts by hand. D-Bus keeps install one command; the cost is a small table of Qt key codes in `dot`. `busctl` is part of systemd, so no new tool. The file is still written so a machine with no session gets the keys at its next login.

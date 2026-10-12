@@ -25,6 +25,7 @@ This spec fills `kde/allow.list` with the KDE settings you actually tuned (short
 - **AC-8**: No file under `kde/` (excluding `allow.list` itself and `real-app-icons.hook`) contains `file:`, `/home/`, `/tmp/`, `http`, or a key named `Recent*` or ending in `Location`, in either a key name or a value; a check walks every committed file under `kde/` and prints the count of violations, which must be 0.
 - **AC-9**: With the theme folders copied by hand into a throwaway user's `~/.local/share` and `~/.config/Kvantum`, logging that user into Plasma, cloning the repo, running `./dot install desktop`, then logging out and in, gives the checklist in *Critical test scenarios*. The user is deleted afterwards.
 - **AC-10**: `tests/dot-status.sh` covers `!` parsing (both forms, and an allow plus `!` overlap reported), the unlisted key check (one unlisted key flagged, the same key with a `!` line not flagged, an unchanged default shortcut not flagged, a `[$i]` key matched by its bare name), that sync never writes a `!` key, and that a font value with commas and spaces round trips through sync and install unchanged, using a throwaway `XDG_CONFIG_HOME`.
+- **AC-11**: For every kept `kglobalshortcutsrc` key install writes, install also sets it in the running shortcut service (kglobalaccel, which lives inside KWin on Wayland) over D-Bus, because the service keeps all shortcuts in memory and writes them back over the file (seen in AC-9 on 2026-10-11: both `kwin` keys were back at their defaults while the session was still running). It then reads the shortcut back and, on a mismatch or an unknown key name, prints `kde: shortcut <grp> <key> did not take, set it in System Settings` and continues (install still exits 0). With no shortcut service on the session bus (no Plasma session), install writes the file only; KWin reads it at its next start. A dry run prints `kde     shortcut <grp> <key> would set` for each one.
 
 ## Decision
 
@@ -101,10 +102,21 @@ Files not tracked at all (no line, so the unlisted check does not read them): `p
 | What | Key | Tool run with the repo value | Installed check |
 |---|---|---|---|
 | colorscheme | `kdeglobals General ColorScheme` | `plasma-apply-colorscheme <v>` | `plasma-apply-colorscheme --list-schemes` has a line equal to `<v>` after removing the leading ` * ` and a trailing `(current ...)` note |
-| cursortheme | `kcminputrc Mouse cursorTheme` | `plasma-apply-cursortheme <v>` | `plasma-apply-cursortheme --list-themes`, same exact match rule |
+| cursortheme | `kcminputrc Mouse cursorTheme` | `plasma-apply-cursortheme <v>` | `plasma-apply-cursortheme --list-themes` has a line containing `[<v>]` (lines read ` * Display Name [id]`, and the key holds the id) |
 | icons | `kdeglobals Icons Theme` | `/usr/lib/plasma-changeicons <v>` (the Arch path; the desktop profile is Arch only) | `~/.local/share/icons/<v>` or `/usr/share/icons/<v>` exists |
 
 A tool runs only when the repo value differs from the live value, the same rule as plain keys, and after every plain key is written. The plasma theme (`plasmarc Theme name`) and the Kvantum theme (`Kvantum/kvantum.kvconfig General theme`) are plain keys: each is the only setting its pick changes, and Plasma or Kvantum falls back to its default until the theme files exist. The Aurorae decoration (`kwinrc org.kde.kdecoration2 theme`) is a plain key too: KWin reads it at log in; when neither `~/.local/share/aurorae/themes/<name without __aurorae__svg__>` nor `/usr/share/aurorae/themes/<same>` exists, install prints the same skipped warning and does not write `library` or `theme`.
+
+**Shortcuts through D-Bus** (AC-11):
+
+| Part | Rule |
+|---|---|
+| Call | `busctl --user call org.kde.kglobalaccel /kglobalaccel org.kde.KGlobalAccel setForeignShortcut asai 4 <component> <key> "" "" <n> <codes...>`, then `shortcut as 4 <component> <key> "" ""` to read it back |
+| Component | the group's last part: `kwin`, `plasmashell`, and `org.kde.spectacle.desktop` for `services/org.kde.spectacle.desktop` (checked live, 2026-10-11) |
+| Keys | the repo value's first field (AC-6 split rule), tab separated shortcuts in order; `none` sends an empty list |
+| Key code | modifiers summed: Meta `0x10000000`, Ctrl `0x04000000`, Alt `0x08000000`, Shift `0x02000000`; plus the key: a letter or digit is its uppercase ASCII code, `F1` to `F12` are `0x01000030` up, `Esc 0x01000000`, `Tab 0x01000001`, `Return 0x01000004`, `Ins 0x01000006`, `Del 0x01000007`, `Print 0x01000009`, `Home 0x01000010`, `End 0x01000011`, `Left 0x01000012`, `Up 0x01000013`, `Right 0x01000014`, `Down 0x01000015`, `PgUp 0x01000016`, `PgDown 0x01000017`, `Space 0x20` (Qt key codes; `Meta+Up` reads back as `285212691`, `Meta+Shift+A` as `301989953`, checked live) |
+| Read back | equal to the sent codes; an empty list and `[0]` both mean none (KWin reports `none` both ways) |
+| Order | right after the file write of the same key, before the theme apply tools |
 
 **Value sourcing**:
 
@@ -116,6 +128,8 @@ A tool runs only when the repo value differs from the live value, the same rule 
 | status, unlisted check | which rc files to scan | rc files named by non `!` lines in `allow.list` |
 | status, unlisted check | the keys present in a live file | the live file under `$XDG_CONFIG_HOME` (default `~/.config`), groups `[A][B]` read as `A/B` |
 | status, shortcut rule | custom and default shortcut | first and second comma separated fields of the `kglobalshortcutsrc` value |
+| install, shortcut | key codes sent over D-Bus | the repo value's first field, through the key code table above |
+| install, shortcut | whether it took | kglobalaccel's own `shortcut` read back |
 | AC-8 check | violation patterns | the list in AC-8 (from your rule, 2026-10-11) |
 
 **Key invariants**:
@@ -142,7 +156,8 @@ Tracer Bullet: one thread through every new path first (one `!` line, one unlist
 4. Fill `kde/allow.list` with every kept and left out line from the tables (with `#` reasons), run `dot sync`, review the new `kde/` files. Satisfies **AC-1**, **AC-2**.
 5. Run `dot status` on this machine until it reports zero unlisted keys; any key not in the tables here is a question for you, not a silent `!`. Satisfies **AC-7**.
 6. Privacy sweep script over `kde/` (count printed, must be 0); run it, and add it to `tests/dot-status.sh`. Satisfies **AC-8**.
-7. Throwaway user check per the checklist, theme folders copied by hand, user deleted after. Satisfies **AC-9**.
+7. Shortcuts through D-Bus: key code conversion plus the set and read back after each shortcut file write; test the conversion (`Meta+Up`, `Meta+Shift+A`, a tab separated pair, `none`, an unknown name) without a session, and the dry run line. Satisfies **AC-11**.
+8. Throwaway user check per the checklist, theme folders copied by hand, user deleted after. Log out and back in after install (AC-9 on 2026-10-11 was judged inside the install session, so only the live color scheme showed). Satisfies **AC-9**.
 
 ## Consequences
 
