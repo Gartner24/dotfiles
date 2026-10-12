@@ -36,7 +36,7 @@ _These are recommendations to keep your build orderly, not requirements. Skip an
 | 4 | Terminals and editor | Slice 2 | done |
 | 5 | Personal scripts | Slice 3 | done |
 | 6 | CLI tool configs | Slice 4 | done |
-| 7 | KDE settings | Slice 5 | planned |
+| 7 | KDE settings | Slice 5 | in-progress |
 | 8 | KDE extras | Slice 6 | planned |
 | 9 | System files | Slice 7 | planned |
 | 10 | Package list and bootstrap | Slice 8 | planned |
@@ -146,10 +146,18 @@ Spec: [0002](../specs/0002-program-inventory/index.md) (scoped git credential he
 
 ## Slice 5: KDE settings
 
-### 7. KDE settings (needs a decision)
+### 7. KDE settings · in-progress
 Your full KDE setup: look and feel, themes, color schemes, window rules, shortcuts, panels, input, power, Kvantum, panel colorizer, with personal state stripped.
 **Done when:** a fresh KDE session restored from the repo matches your current desktop, and the committed files contain no recent files, accounts or device names.
-- [ ] Design it (spec): `/architect KDE settings`
+Window rules and panel colorizer presets are empty today; panels and wallpaper go to feature 8. Hardware model names in the `Libinput` groups are kept (not personal device names, your call, 2026-10-11).
+Spec: [0004](../specs/0004-kde-settings-keys.md), code in `dot`, `kde/allow.list`, `kde/`, `tests/dot-status.sh`
+- [x] Design it (spec): `/architect KDE settings`
+- [ ] Build it: `/develop KDE settings`
+  - [ ] `!` lines and the unlisted key check in `dot status`, with tests (AC-2, AC-6, AC-10)
+  - [ ] Theme apply for color scheme, cursor and icons, with session guard and skipped warnings (AC-3, AC-4, AC-5)
+  - [ ] Full allow.list, zero unlisted keys, privacy sweep (AC-1, AC-7, AC-8)
+  - [ ] Throwaway user restore check (AC-9)
+- [ ] Verify it: `/check verify KDE settings`
 
 ## Slice 6: KDE extras
 
@@ -171,7 +179,7 @@ Mac Dock plasmoid, real-app-icons and its pacman hook, wallpapers, aurorae and c
 Turn the install list from the inventory (programs you actually use, not just the configured ones) into files the install script reads, split into desktop and server, and into pacman, AUR and flatpak.
 **Done when:** install on a new desktop offers every program on the install list, install on a server offers only server items, and sync flags programs installed since the list was last reviewed.
 Spec: [0002](../specs/0002-program-inventory/index.md) (the install list and its Follow-up: yay first, Plasma without `discover`), [0003](../specs/0003-server-profile.md) (the server mapping table and its Follow-up: full Oh My Zsh only on desktop, sparse `omz-git` checkout on servers, `chsh` to zsh)
-The gh credential helper is hardcoded to `/usr/bin/gh`; where gh comes from mise (Ubuntu 22.04), use `!gh auth git-credential` from PATH.
+The Inter font and `kvantum` must be on the desktop list (spec 0004 Follow-up). The gh credential helper is hardcoded to `/usr/bin/gh`; where gh comes from mise (Ubuntu 22.04), use `!gh auth git-credential` from PATH.
 - [ ] Build it: `/develop package list and bootstrap`
 
 ## Slice 9: README and architecture docs
