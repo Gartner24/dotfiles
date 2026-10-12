@@ -1,7 +1,161 @@
 # KDE keys dot keeps: <rcfile> <Group> <Key> per line. Quote a group or key with spaces.
 # Nested groups as Group/Sub. Only these keys are ever read into kde/<rcfile>.
-# Feature 7 (KDE settings) fills in the full list.
+# A line starting with ! leaves a key, or a whole group with its nested groups, out on
+# purpose: never read or written, it only quiets the unlisted key check in dot status.
+# Every key in a file named here must be kept or left out (spec 0004).
 
+# --- kglobalshortcutsrc: only shortcuts that differ from KDE's default count ---
 # Meta+Up maximizes instead of quick tiling to the top
 kglobalshortcutsrc kwin "Window Maximize"
 kglobalshortcutsrc kwin "Window Quick Tile Top"
+kglobalshortcutsrc plasmashell "previous activity"
+kglobalshortcutsrc services/org.kde.spectacle.desktop CurrentMonitorScreenShot
+kglobalshortcutsrc services/org.kde.spectacle.desktop OpenWithoutScreenshot
+
+# --- kdeglobals ---
+kdeglobals General BrowserApplication
+kdeglobals General TerminalApplication
+kdeglobals General TerminalService
+kdeglobals General UseSystemBell
+kdeglobals General font
+kdeglobals General menuFont
+kdeglobals General smallestReadableFont
+kdeglobals General toolBarFont
+# restored with plasma-apply-colorscheme, not a plain write
+kdeglobals General ColorScheme
+# restored with plasma-changeicons
+kdeglobals Icons Theme
+kdeglobals KDE AnimationDurationFactor
+kdeglobals KDE widgetStyle
+kdeglobals WM activeFont
+kdeglobals "KFileDialog Settings" "Allow Expansion"
+kdeglobals "KFileDialog Settings" "Automatically select filename extension"
+kdeglobals "KFileDialog Settings" "Breadcrumb Navigation"
+kdeglobals "KFileDialog Settings" "Decoration position"
+kdeglobals "KFileDialog Settings" "Show Full Path"
+kdeglobals "KFileDialog Settings" "Show Inline Previews"
+kdeglobals "KFileDialog Settings" "Show Preview"
+kdeglobals "KFileDialog Settings" "Show Speedbar"
+kdeglobals "KFileDialog Settings" "Show hidden files"
+kdeglobals "KFileDialog Settings" "Sort by"
+kdeglobals "KFileDialog Settings" "Sort directories first"
+kdeglobals "KFileDialog Settings" "Sort hidden files last"
+kdeglobals "KFileDialog Settings" "Sort reversed"
+kdeglobals "KFileDialog Settings" "Speedbar Width"
+kdeglobals "KFileDialog Settings" "View Style"
+# expanded from the color scheme by the apply tool
+!kdeglobals Colors:Button
+!kdeglobals Colors:Complementary
+!kdeglobals Colors:Header
+!kdeglobals Colors:Selection
+!kdeglobals Colors:Tooltip
+!kdeglobals Colors:View
+!kdeglobals Colors:Window
+!kdeglobals ColorEffects:Disabled
+!kdeglobals ColorEffects:Inactive
+!kdeglobals WM activeBackground
+!kdeglobals WM activeBlend
+!kdeglobals WM activeForeground
+!kdeglobals WM inactiveBackground
+!kdeglobals WM inactiveBlend
+!kdeglobals WM inactiveForeground
+# written by the apply tool
+!kdeglobals General ColorSchemeHash
+# stale Global Theme name (never applied, AC-5); contrast comes from the scheme
+!kdeglobals KDE LookAndFeelPackage
+!kdeglobals KDE contrast
+!kdeglobals KDE frameContrast
+# paths: no path, URL or recent list reaches this public repo
+!kdeglobals "KFileDialog Settings" "Recent Files"
+!kdeglobals "KFileDialog Settings" "Recent URLs"
+
+# --- kwinrc ---
+kwinrc Desktops Number
+kwinrc Desktops Rows
+kwinrc EdgeBarrier EdgeBarrier
+kwinrc Effect-overview BorderActivate
+kwinrc Plugins shakecursorEnabled
+kwinrc TabBox HighlightWindows
+kwinrc org.kde.kdecoration2 ButtonsOnLeft
+kwinrc org.kde.kdecoration2 ButtonsOnRight
+kwinrc org.kde.kdecoration2 library
+kwinrc org.kde.kdecoration2 theme
+# this screen and its UUIDs, not a preference
+!kwinrc Desktops Id_1
+!kwinrc Tiling
+!kwinrc Windows_HDR
+!kwinrc Xwayland
+
+# --- kcminputrc: Libinput groups name hardware models, not personal devices ---
+# restored with plasma-apply-cursortheme
+kcminputrc Mouse cursorTheme
+kcminputrc "Libinput/1133/16531/Logitech PRO X" NaturalScroll
+kcminputrc "Libinput/1133/16531/Logitech PRO X" PointerAcceleration
+kcminputrc "Libinput/1133/16531/Logitech PRO X" PointerAccelerationProfile
+kcminputrc "Libinput/1133/16531/Logitech PRO X" ScrollMethod
+kcminputrc "Libinput/2362/12310/ASCP1200:00 093A:3016 Mouse" PointerAccelerationProfile
+kcminputrc "Libinput/2362/12310/ASCP1200:00 093A:3016 Touchpad" MiddleButtonEmulation
+kcminputrc "Libinput/2362/12310/ASCP1200:00 093A:3016 Touchpad" NaturalScroll
+kcminputrc "Libinput/2362/12310/ASCP1200:00 093A:3016 Touchpad" ScrollFactor
+
+# --- powerdevilrc ---
+powerdevilrc AC/Keyboard KeyboardBrightness
+powerdevilrc AC/Keyboard UseProfileSpecificKeyboardBrightness
+powerdevilrc AC/SuspendAndShutdown AutoSuspendIdleTimeoutSec
+powerdevilrc Battery/SuspendAndShutdown AutoSuspendIdleTimeoutSec
+powerdevilrc Battery/SuspendAndShutdown PowerButtonAction
+powerdevilrc General pausePlayersOnSuspend
+
+# --- plasmarc ---
+plasmarc PlasmaViews PanelHoverDelay
+plasmarc Theme name
+# tool state; wallpaper paths belong to feature 8
+!plasmarc Theme-plasma-themeexplorer
+!plasmarc Wallpapers
+
+# --- ksmserverrc ---
+ksmserverrc General loginMode
+# session state
+!ksmserverrc "LegacySession: saved at previous logout"
+!ksmserverrc "Session: saved at previous logout"
+
+# --- plasmanotifyrc ---
+plasmanotifyrc Notifications PopupTimeout
+# apps seen so far, a past Do Not Disturb time
+!plasmanotifyrc Applications
+!plasmanotifyrc DoNotDisturb
+
+# --- klipperrc ---
+klipperrc General KeepClipboardContents
+klipperrc General MaxClipItems
+klipperrc General SelectionTextOnly
+# written by Klipper
+!klipperrc General Version
+
+# --- kiorc ---
+kiorc Confirmations ConfirmEmptyTrash
+
+# --- dolphinrc ---
+dolphinrc DetailsMode PreviewSize
+dolphinrc IconsMode PreviewSize
+dolphinrc "KFileDialog Settings" "Places Icons Auto-resize"
+dolphinrc "KFileDialog Settings" "Places Icons Static Size"
+dolphinrc MainWindow MenuBar
+# window sizes, version stamps
+!dolphinrc ExtractDialog
+!dolphinrc General
+
+# --- spectaclerc ---
+spectaclerc Annotations annotationToolType
+spectaclerc Annotations freehandStrokeColor
+spectaclerc Annotations freehandStrokeWidth
+spectaclerc Annotations rectangleFillColor
+spectaclerc Annotations rectangleStrokeColor
+# save paths and window sizes
+!spectaclerc General ocrLanguages
+!spectaclerc ImageSave
+!spectaclerc VideoSave
+!spectaclerc ViewerWindow
+
+# --- Kvantum ---
+Kvantum/kvantum.kvconfig General theme

@@ -54,6 +54,15 @@ check "folder deleted, not committed" 1 "broken link: ~/.config/app/later/f"
 git -C home/app/.config/nv rm -rq tmp && git -C home/app/.config/nv commit -qm drop
 check "folder deleted inside a submodule" 1 "broken link: ~/.config/nv/tmp/stray"
 
+# --- privacy sweep over every committed file under kde/ in the real repo (spec 0004, AC-8)
+viol=$(cd "$SRC" && git ls-files kde | grep -vxE 'kde/(allow\.list|real-app-icons\.hook)' |
+  xargs -r -d '\n' grep -nHE -e 'file:|/home/|/tmp/|http' -e '^[[:space:]]*Recent[^=]*=' \
+    -e '^[^=]*Location(\[\$[a-z]+\])?[[:space:]]*=')
+n=$(grep -c . <<<"$viol")
+if ((n == 0)); then echo "ok   privacy sweep over kde/: 0 violations"
+else echo "FAIL privacy sweep over kde/: $n violation(s)"; echo "$viol" | sed 's/^/  /'; fail=1
+fi
+
 # --- KDE keys: ! lines and the unlisted key check (spec 0004, AC-10) ---------------
 command -v kreadconfig6 >/dev/null || { echo "skip KDE cases: no kreadconfig6"; exit $fail; }
 export XDG_CONFIG_HOME=$HOME/.config
