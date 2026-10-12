@@ -245,18 +245,63 @@ kcfg() {
   fi
 }
 
+# Theme picks KDE expands into other keys: restored by KDE's own tool, never by a plain
+# write, and after every plain key (spec 0004, AC-3). Never plasma-apply-lookandfeel (AC-5).
+declare -A KDE_APPLY=(
+  [kdeglobals$'\t'General$'\t'ColorScheme]=colorscheme
+  [kcminputrc$'\t'Mouse$'\t'cursorTheme]=cursortheme
+  [kdeglobals$'\t'Icons$'\t'Theme]=icons
+)
+
+theme_installed() { # what value
+  case $1 in
+    colorscheme) plasma-apply-colorscheme --list-schemes 2>/dev/null | sed 's/^ \* //; s/ (current.*)$//' | grep -qxF -- "$2" ;;
+    # lines read " * Display Name [id]"; the key holds the id
+    cursortheme) plasma-apply-cursortheme --list-themes 2>/dev/null | grep -qF -- "[$2]" ;;
+    icons) [[ -d $HOME/.local/share/icons/$2 || -d /usr/share/icons/$2 ]] ;;
+    decoration) [[ -d $HOME/.local/share/aurorae/themes/${2#__aurorae__svg__} || -d /usr/share/aurorae/themes/${2#__aurorae__svg__} ]] ;;
+  esac
+}
+
+apply_theme() { # what value
+  case $1 in
+    colorscheme) plasma-apply-colorscheme "$2" ;;
+    cursortheme) plasma-apply-cursortheme "$2" ;;
+    icons) /usr/lib/plasma-changeicons "$2" ;;   # Arch path; the desktop profile is Arch only
+  esac
+}
+
 install_kde() {
-  local rc grp key rv lv n=0
+  local rc grp key rv lv what deco a n=0 warned=0
+  local -a apply=()
+  deco=$(kcfg read "$REPO/kde/kwinrc" org.kde.kdecoration2 theme)
   while IFS=$'\t' read -r rc grp key; do
     rv=$(kcfg read "$REPO/kde/$rc" "$grp" "$key")
     [[ $rv == "$ABSENT" ]] && continue
     lv=$(kcfg read "$rc" "$grp" "$key")
     [[ $lv == "$rv" ]] && continue
+    what=${KDE_APPLY[$rc$'\t'$grp$'\t'$key]:-}
+    if [[ -n $what ]]; then apply+=("$what"$'\t'"$rv"); continue; fi
+    # an Aurorae decoration whose theme folder is missing would leave KWin without title bars
+    if [[ $rc == kwinrc && $grp == org.kde.kdecoration2 && ($key == library || $key == theme) && $deco == __aurorae__svg__* ]] &&
+      ! theme_installed decoration "$deco"; then
+      ((warned++)) || echo "kde: decoration theme $deco is not installed, skipped"
+      continue
+    fi
     if ((DRY)); then echo "kde     $rc [$grp] $key would change"; continue; fi
     kcfg write "$rc" "$grp" "$key" "$rv" || die "could not write $rc [$grp] $key"
     ((n++))
   done < <(kde_keys)
   ((n)) && echo "kde: wrote $n key(s). Log out and back in, or the running session may write the old values back."
+
+  ((${#apply[@]})) || return 0
+  if [[ -z ${WAYLAND_DISPLAY:-}${DISPLAY:-} ]]; then echo "kde: theme apply needs a Plasma session, skipped"; return 0; fi
+  for a in "${apply[@]}"; do
+    what=${a%%$'\t'*} rv=${a#*$'\t'}
+    if ! theme_installed "$what" "$rv"; then echo "kde: $what theme $rv is not installed, skipped"; continue; fi
+    if ((DRY)); then echo "kde     apply $what $rv would run"; continue; fi
+    apply_theme "$what" "$rv" || die "could not apply $what $rv"
+  done
 }
 
 sync_kde() {

@@ -118,4 +118,29 @@ echo '!kglobalshortcutsrc kwin "Window Minimize"' >>kde/allow.list
 echo '!testrc General font' >>kde/allow.list
 check "allow plus ! overlap reported" 1 "dot: allow.list covers testrc [General] font twice"
 
+# --- theme apply (spec 0004, AC-3, AC-4); dry runs only, a real apply would reach the live session
+install_out() { # name, expected line, env...
+  local name=$1 want=$2 out; shift 2
+  out=$(env "$@" ./dot install desktop -n 2>&1 </dev/null)
+  if [[ $? == 0 && $out == *"$want"* ]]; then echo "ok   $name"
+  else echo "FAIL $name"; echo "$out" | sed 's/^/  /'; fail=1
+  fi
+}
+cat >>kde/allow.list <<'EOF'
+kdeglobals General ColorScheme
+kwinrc org.kde.kdecoration2 library
+kwinrc org.kde.kdecoration2 theme
+EOF
+printf '[General]\nColorScheme=Oxygen\n' >kde/kdeglobals
+printf '[org.kde.kdecoration2]\nlibrary=org.kde.kwin.aurorae\ntheme=__aurorae__svg__NoSuchDeco\n' >kde/kwinrc
+install_out "installed scheme would run" "kde     apply colorscheme Oxygen would run" DISPLAY=:0
+install_out "missing decoration skipped" "kde: decoration theme __aurorae__svg__NoSuchDeco is not installed, skipped" DISPLAY=:0
+install_out "no session skips apply" "kde: theme apply needs a Plasma session, skipped" -u DISPLAY -u WAYLAND_DISPLAY
+kwriteconfig6 --file "$T/kde/kde/kdeglobals" --group General --key ColorScheme -- NoSuchScheme
+install_out "missing scheme skipped" "kde: colorscheme theme NoSuchScheme is not installed, skipped" DISPLAY=:0
+if env -u DISPLAY -u WAYLAND_DISPLAY ./dot install desktop >/dev/null 2>&1 </dev/null && ! grep -qs kdecoration2 "$C/kwinrc" && ! grep -qs ColorScheme "$C/kdeglobals"; then
+  echo "ok   no session: install exits 0, no decoration keys, no plain ColorScheme write"
+else echo "FAIL no session: install failed, or wrote decoration keys or a plain ColorScheme"; fail=1
+fi
+
 exit $fail
