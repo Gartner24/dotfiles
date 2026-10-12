@@ -7,16 +7,6 @@
 
 This spec fills `kde/allow.list` with the KDE settings you actually tuned (shortcuts, fonts, KWin buttons, mouse and touchpad, power, clipboard, Dolphin, Spectacle and the file dialog), and marks every other key in those files as left out on purpose. The color scheme, cursor and icon picks are restored by KDE's own apply tools instead of raw key writes, because writing the name alone does not recolor anything; the plasma theme and Kvantum theme are plain keys. `dot status` learns to list any new key that shows up in a tracked file and is not decided yet, so a setting you change next month does not silently stay off the repo. Panels and wallpaper stay with feature 8.
 
-## Context
-
-Spec 0001 already decided the mechanism: KDE rc files are never linked, `kde/allow.list` names each kept key, `dot sync` reads them with `kreadconfig6`, `dot install` writes them with `kwriteconfig6` and asks you to log out. It left one thing open (its Follow-up): which files and keys. Today the list holds two `kglobalshortcutsrc` keys.
-
-A survey of your live `~/.config` on 2026-10-11 shaped the answer. `kwinrulesrc` is empty and `panel-colorizer/presets` is empty, so there are no window rules or colorizer presets to keep. Only four global shortcuts differ from KDE's defaults. Your look is assembled by hand: `LookAndFeelPackage` still says `org.kde.breezedark.desktop` while the color scheme, plasma theme, icons, cursor, Kvantum and Aurorae are MacTahoe, Papirus and WhiteSur, so applying a Global Theme (a bundle of all those picks) would overwrite your setup with Breeze Dark.
-
-Two traps drive the rest. First, `kdeglobals` holds about 110 `[Colors:*]`, `[ColorEffects:*]` and `[WM]` color keys that KDE expands from the scheme when you pick it; copying `ColorScheme=MacTahoeDark` alone recolors nothing, and copying all 110 keys skips the GTK and window title updates the apply tool does. Second, an allow list only reads what it names, so any setting you tweak after today is lost on the next machine unless something tells you about it.
-
-The repo is public. Several of these files mix preferences with paths and recent lists (Spectacle's last save location, a file dialog's recent URLs). Folder names can name clients, so no key holding a path, URL or recent list may reach the repo.
-
 ## Requirements
 
 **User stories**:
@@ -36,55 +26,13 @@ The repo is public. Several of these files mix preferences with paths and recent
 - **AC-9**: With the theme folders copied by hand into a throwaway user's `~/.local/share` and `~/.config/Kvantum`, logging that user into Plasma, cloning the repo, running `./dot install desktop`, then logging out and in, gives the checklist in *Critical test scenarios*. The user is deleted afterwards.
 - **AC-10**: `tests/dot-status.sh` covers `!` parsing (both forms, and an allow plus `!` overlap reported), the unlisted key check (one unlisted key flagged, the same key with a `!` line not flagged, an unchanged default shortcut not flagged, a `[$i]` key matched by its bare name), that sync never writes a `!` key, and that a font value with commas and spaces round trips through sync and install unchanged, using a throwaway `XDG_CONFIG_HOME`.
 
-## Options considered
-
-### Option 1: Allow list per key, theme names through the apply tools, unlisted key check in status
-
-Keep only preference keys, let `plasma-apply-colorscheme`, `plasma-apply-cursortheme` and `plasma-changeicons` restore the theme picks that expand into other settings, record every left out key with a `!` line, and have `dot status` flag anything undecided.
-
-**Pros**:
-- About 60 keys instead of about 170, and every one of them is a choice you made.
-- Theme picks restore the way System Settings does them, including GTK colors and title bars.
-- New tweaks surface on their own.
-
-**Cons**:
-- Three small special cases in `dot` (the apply table).
-- A one time triage of every key in the tracked files (done in this spec).
-
-### Option 2: Allow list per key, including the expanded `[Colors:*]` groups
-
-The mechanism exactly as 0001 built it, with about 110 more color keys listed.
-
-**Pros**:
-- No new code path.
-
-**Cons**:
-- GTK apps and window title colors may not follow, because nothing triggers the apply step.
-- A scheme update upstream leaves your copy stale; the repo holds a frozen copy of a theme file.
-
-### Option 3: Manual upkeep, no status check
-
-Option 1 without the unlisted key check; you add lines when you remember.
-
-**Pros**:
-- Less code.
-
-**Cons**:
-- The failure is silent: a setting changed months ago is simply missing on the next machine, and you find out only then.
-
 ## Decision
+
+Context, options and rationale: [rationale.md](rationale.md).
 
 **Chosen option**: Option 1: allow list per key, theme names through the apply tools, unlisted key check in `dot status`.
 
 Feature 7 keeps the keys listed below, restores theme picks with KDE's apply tools, marks every other key with a `!` line, and teaches `dot status` to flag undecided keys.
-
-## Rationale
-
-The repo is public and the allow list is the only thing between a mixed rc file and a commit, so the list stays a list of names, and every left out key is written down too. That second half is what makes the unlisted key check work: without `!` lines `dot status` would nag about window sizes forever and you would learn to ignore it.
-
-Theme picks are different from other keys because KDE derives many other keys from them. The apply tools are the supported way to do that, they ship with Plasma (all three are on this machine), and they keep working when MacTahoe updates its scheme. Only three picks need a tool: the color scheme expands into about 110 color keys, and the icon and cursor tools also update GTK. The plasma theme and the Kvantum theme are single keys that a plain write restores just as well, so they stay plain (cross check, 2026-10-11). Skipping a missing theme instead of failing keeps install usable before feature 8 delivers the theme files.
-
-Panels stay with feature 8 because `plasma-org.kde.plasma.desktop-appletsrc` is keyed by numeric containment IDs that a fresh machine does not share; the theme repo's layout script (0001, AC-13) is the right tool for that.
 
 ## Feature design
 

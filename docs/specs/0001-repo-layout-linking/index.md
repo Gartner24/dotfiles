@@ -166,7 +166,7 @@ Later features move programs into the layout (3 zsh, 4 terminals and nvim with *
 
 ## Follow-up
 
-- [x] Feature 7 (KDE settings) decides the exact rc files and keys in `kde/allow.list` (spec [0004](../0004-kde-settings-keys.md)).
+- [x] Feature 7 (KDE settings) decides the exact rc files and keys in `kde/allow.list` (spec [0004](../0004-kde-settings-keys/index.md)).
 - [ ] Feature 7 or 8 names the theme repo and checks the license of each upstream project it builds on before publishing (MacTahoe-kde is LGPL-3.0; the icon theme, WhiteSur cursors, AndromedaLauncher and KdeControlStation are not checked yet).
 - [ ] Feature 13 confirms stow is packaged on the chosen server distros, and that claude-config's `install.sh` runs headless (its self checks need `node`, `python3` and `jq`).
 - [ ] claude-config's own reorganization stays the deferred scope item; this spec only fixes where it sits and how `dot` calls it.

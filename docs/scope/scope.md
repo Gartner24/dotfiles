@@ -150,7 +150,7 @@ Spec: [0002](../specs/0002-program-inventory/index.md) (scoped git credential he
 Your full KDE setup: look and feel, themes, color schemes, window rules, shortcuts, panels, input, power, Kvantum, panel colorizer, with personal state stripped.
 **Done when:** a fresh KDE session restored from the repo matches your current desktop, and the committed files contain no recent files, accounts or device names.
 Window rules and panel colorizer presets are empty today; panels and wallpaper go to feature 8. Hardware model names in the `Libinput` groups are kept (not personal device names, your call, 2026-10-11).
-Spec: [0004](../specs/0004-kde-settings-keys.md), code in `dot`, `kde/allow.list`, `kde/`, `tests/dot-status.sh`
+Spec: [0004](../specs/0004-kde-settings-keys/index.md), code in `dot`, `kde/allow.list`, `kde/`, `tests/dot-status.sh`
 - [x] Design it (spec): `/architect KDE settings`
 - [ ] Build it: `/develop KDE settings`
   - [x] `!` lines and the unlisted key check in `dot status`, with tests (AC-2, AC-6, AC-10)
