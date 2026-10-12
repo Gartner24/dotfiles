@@ -153,7 +153,7 @@ Window rules and panel colorizer presets are empty today; panels and wallpaper g
 Spec: [0004](../specs/0004-kde-settings-keys.md), code in `dot`, `kde/allow.list`, `kde/`, `tests/dot-status.sh`
 - [x] Design it (spec): `/architect KDE settings`
 - [ ] Build it: `/develop KDE settings`
-  - [ ] `!` lines and the unlisted key check in `dot status`, with tests (AC-2, AC-6, AC-10)
+  - [x] `!` lines and the unlisted key check in `dot status`, with tests (AC-2, AC-6, AC-10)
   - [ ] Theme apply for color scheme, cursor and icons, with session guard and skipped warnings (AC-3, AC-4, AC-5)
   - [ ] Full allow.list, zero unlisted keys, privacy sweep (AC-1, AC-7, AC-8)
   - [ ] Throwaway user restore check (AC-9)

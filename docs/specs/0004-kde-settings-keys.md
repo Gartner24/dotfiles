@@ -1,7 +1,7 @@
 # 0004. KDE settings: the kept keys, theme apply tools, and an unlisted key check
 
 **Date**: 2026-10-11
-**Status**: Proposed
+**Status**: In Progress
 
 ## Summary
 

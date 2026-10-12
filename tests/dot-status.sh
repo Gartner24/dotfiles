@@ -17,7 +17,7 @@ fail=0
 
 check() { # name, expected exit, expected line (empty: none)
   local out rc
-  out=$("$T/repo/dot" status 2>&1); rc=$?
+  out=$("$DOT" status 2>&1); rc=$?
   if [[ $rc != "$2" || ( -n $3 && $out != *"$3"* ) ]]; then
     echo "FAIL $1 (exit $rc)"; echo "$out" | sed 's/^/  /'; fail=1
   else echo "ok   $1"
@@ -32,6 +32,7 @@ echo x >"$T/sub/tmp/stray"
 git -C "$T/sub" add -A && git -C "$T/sub" commit -qm sub
 
 git init -q "$T/repo"
+DOT=$T/repo/dot
 cd "$T/repo" || exit 1
 cp "$SRC/dot" .
 mkdir -p profiles home/app/.config/app/{keep,gone,later}
@@ -52,5 +53,69 @@ check "folder deleted, not committed" 1 "broken link: ~/.config/app/later/f"
 
 git -C home/app/.config/nv rm -rq tmp && git -C home/app/.config/nv commit -qm drop
 check "folder deleted inside a submodule" 1 "broken link: ~/.config/nv/tmp/stray"
+
+# --- KDE keys: ! lines and the unlisted key check (spec 0004, AC-10) ---------------
+command -v kreadconfig6 >/dev/null || { echo "skip KDE cases: no kreadconfig6"; exit $fail; }
+export XDG_CONFIG_HOME=$HOME/.config
+C=$XDG_CONFIG_HOME
+FONT='Inter,10,-1,5,400,0,0,0,0,0,0,0,0,0,0,1,Regular Text'
+git init -q "$T/kde"
+DOT=$T/kde/dot
+cd "$T/kde" || exit 1
+cp "$SRC/dot" .
+mkdir -p profiles kde "$C"
+: >profiles/desktop
+cat >kde/allow.list <<'EOF'
+testrc General font
+testrc General Picked
+!testrc General Stale
+!testrc Window
+kglobalshortcutsrc kwin "Window Maximize"
+EOF
+cat >"$C/testrc" <<EOF
+[General]
+font=$FONT
+Picked[\$i]=yes
+Stale=1
+
+[Window]
+Height=5
+
+[Window][Sub]
+Width=10
+EOF
+cat >"$C/kglobalshortcutsrc" <<'EOF'
+[kwin]
+_k_friendly_name=KWin
+Window Maximize=Meta+Up,Meta+PgUp,Maximize Window
+Window Minimize=Meta+PgDown,Meta+PgDown,Minimize Window
+EOF
+git add -A && git commit -qm init
+./dot install desktop >/dev/null </dev/null || { echo "FAIL kde install"; exit 1; }
+./dot sync >/dev/null 2>&1 </dev/null
+
+if grep -qE 'Stale|Height|Width' kde/testrc; then echo "FAIL sync wrote a ! key"; sed 's/^/  /' kde/testrc; fail=1
+else echo "ok   sync never writes a ! key"
+fi
+check "! key, ! group, nested group, [\$i] key, default shortcut" 0 "all good"
+
+kwriteconfig6 --file testrc --group General --key font -- 'Noto Sans,9'
+./dot install desktop >/dev/null </dev/null
+got=$(kreadconfig6 --file testrc --group General --key font)
+if [[ $got == "$FONT" ]]; then echo "ok   font with commas and spaces round trips"
+else echo "FAIL font round trip: $got"; fail=1
+fi
+
+sed -i 's/^\[General\]$/[General]\nNew=1/' "$C/testrc"
+check "unlisted key flagged" 1 "kde: testrc [General] New is not in allow.list"
+echo '!testrc General New' >>kde/allow.list
+check "unlisted key quieted by a ! line" 0 "all good"
+
+sed -i 's/^Window Minimize=Meta+PgDown,/Window Minimize=Meta+End,/' "$C/kglobalshortcutsrc"
+check "changed shortcut flagged" 1 "kde: kglobalshortcutsrc [kwin] Window Minimize is not in allow.list"
+echo '!kglobalshortcutsrc kwin "Window Minimize"' >>kde/allow.list
+
+echo '!testrc General font' >>kde/allow.list
+check "allow plus ! overlap reported" 1 "dot: allow.list covers testrc [General] font twice"
 
 exit $fail

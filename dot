@@ -186,15 +186,50 @@ sync_system() {
 
 # --- KDE keys (read and written one key at a time, never linked) ----------------
 
-# allow.list lines as rcfile<TAB>group<TAB>key; quotes group words with spaces.
-kde_keys() {
-  local line
+# allow.list lines as kind<TAB>rcfile<TAB>group<TAB>key; quotes group words with spaces.
+# kind is + for a kept key, ! for a left out key or (empty key) a whole group (spec 0004, AC-2).
+kde_lines() {
+  local line kind
   local -a f
   [[ -f $REPO/kde/allow.list ]] || return 0
   grep -vE '^[[:space:]]*(#|$)' "$REPO/kde/allow.list" | while IFS= read -r line; do
-    mapfile -t f < <(xargs printf '%s\n' <<<"$line")
-    if ((${#f[@]} != 3)); then echo "dot: bad kde/allow.list line: $line" >&2; continue; fi
-    printf '%s\t%s\t%s\n' "${f[@]}"
+    kind=+
+    [[ $line == '!'* ]] && kind='!'
+    mapfile -t f < <(xargs printf '%s\n' <<<"${line#!}")
+    if [[ ${#f[@]} != 3 && ! ($kind == '!' && ${#f[@]} == 2) ]]; then
+      echo "dot: bad kde/allow.list line: $line" >&2; continue
+    fi
+    printf '%s\t%s\t%s\t%s\n' "$kind" "${f[0]}" "${f[1]}" "${f[2]:-}"
+  done
+}
+# A ! line never causes a read or a write; only the unlisted key check sees it.
+kde_keys() { kde_lines | sed -n 's/^+\t//p'; }
+kde_ignores() { kde_lines | sed -n 's/^!\t//p'; }
+
+# Keys present in a live rc file as group<TAB>key, groups [A][B] as A/B (spec 0004, AC-6).
+# A kglobalshortcutsrc key counts only when its shortcut (field 1) differs from the default (field 2).
+rc_keys() {
+  awk -v sc="$([[ $1 == kglobalshortcutsrc ]] && echo 1)" '
+    /^[[:space:]]*(#|$)/ { next }
+    /^\[/ { g = $0; sub(/(\[\$[a-z]+\])+$/, "", g); sub(/^\[/, "", g); sub(/\]$/, "", g); gsub(/\]\[/, "/", g); next }
+    g == "" || !index($0, "=") { next }
+    {
+      k = substr($0, 1, index($0, "=") - 1); v = substr($0, index($0, "=") + 1)
+      sub(/^[[:space:]]+/, "", k); sub(/[[:space:]]+$/, "", k); sub(/\[\$[a-z]+\]$/, "", k)
+      if (sc) { if (k == "_k_friendly_name") next; gsub(/\\,/, "\001", v); split(v, f, ","); if (f[1] == f[2]) next }
+      print g "\t" k
+    }' "$2"
+}
+
+# kde_ignored RC GROUP KEY: a ! line names the key, its group, or a parent group.
+# Reads skip[] from cmd_status (keys rc<TAB>group<TAB>key, key empty for a whole group).
+kde_ignored() {
+  local g=$2
+  [[ -n ${skip[$1$'\t'$2$'\t'$3]:-} ]] && return 0
+  while :; do
+    [[ -n ${skip[$1$'\t'$g$'\t']:-} ]] && return 0
+    [[ $g == */* ]] || return 1
+    g=${g%/*}
   done
 }
 
@@ -236,10 +271,11 @@ sync_kde() {
     fresh[$rc]=1
     v=$(kcfg read "$rc" "$grp" "$key")
     if [[ $v == "$ABSENT" ]]; then echo "kde: $rc [$grp] $key is not set on this machine, skipped"; continue; fi
-    kcfg write "$KDE_TMP/$rc" "$grp" "$key" "$v" || die "could not write kde/$rc"
+    mkdir -p "$(dirname "$KDE_TMP/$rc")" && kcfg write "$KDE_TMP/$rc" "$grp" "$key" "$v" || die "could not write kde/$rc"
   done < <(kde_keys)
   for rc in "${!fresh[@]}"; do
-    if [[ -f $KDE_TMP/$rc ]]; then mv -f -- "$KDE_TMP/$rc" "$REPO/kde/$rc" || die "could not replace kde/$rc"
+    if [[ -f $KDE_TMP/$rc ]]; then
+      mkdir -p "$(dirname "$REPO/kde/$rc")" && mv -f -- "$KDE_TMP/$rc" "$REPO/kde/$rc" || die "could not replace kde/$rc"
     else rm -f -- "$REPO/kde/$rc"
     fi
   done
@@ -296,7 +332,7 @@ cmd_status() {
   resolve_profile ""
   local problems=0 pkg rel total linked l d owner n rc grp key name src dst
   local -a dirs files=()
-  local -A inprof=()
+  local -A inprof=() keep=() skip=() tracked=()
 
   for pkg in "${PKGS[@]}"; do inprof[$pkg]=1; done
   for n in "${BAD[@]}"; do echo "profile: '$n' has no folder under home/ or system/ and is no submodule"; ((problems++)); done
@@ -348,9 +384,25 @@ cmd_status() {
 
   if [[ $PROFILE == desktop ]]; then
     while IFS=$'\t' read -r rc grp key; do
+      keep[$rc$'\t'$grp$'\t'$key]=1 tracked[$rc]=1
       [[ $(kcfg read "$REPO/kde/$rc" "$grp" "$key") == "$(kcfg read "$rc" "$grp" "$key")" ]] && continue
       echo "kde: $rc [$grp] $key differs from the repo"; ((problems++))
     done < <(kde_keys)
+    while IFS= read -r n; do skip[$n]=1; done < <(kde_ignores)
+    for n in "${!keep[@]}"; do
+      IFS=$'\t' read -r rc grp key <<<"$n"
+      kde_ignored "$rc" "$grp" "$key" || continue
+      echo "dot: allow.list covers $rc [$grp] $key twice"; ((problems++))
+    done
+    # every key in a tracked file must be kept or left out on purpose (spec 0004, AC-6)
+    for rc in "${!tracked[@]}"; do
+      src=${XDG_CONFIG_HOME:-$HOME/.config}/$rc
+      [[ -f $src ]] || continue
+      while IFS=$'\t' read -r grp key; do
+        [[ -n ${keep[$rc$'\t'$grp$'\t'$key]:-} ]] || kde_ignored "$rc" "$grp" "$key" && continue
+        echo "kde: $rc [$grp] $key is not in allow.list"; ((problems++))
+      done < <(rc_keys "$rc" "$src")
+    done
   fi
 
   ((problems)) && { echo "$problems problem(s)"; return 1; }
