@@ -65,7 +65,7 @@ Custom dock widget, icon theme builder and its pacman hook. code in `.local/shar
 ### 1. Repo layout and linking method (in-progress)
 Decide the folder per program layout, how files get linked or copied into place, and how the sync keeps personal state out of a public repo.
 **Done when:** a spec records the layout (one folder per program, scripts folder, system folder, nvim submodule path), how a program is marked desktop only or server too, the link method, how KDE files that KDE rewrites itself are tracked, and the deny list mechanism.
-Spec: [0001](../specs/0001-repo-layout-linking/index.md), code in `dot`, `deny.list`, `hooks/`, `profiles/`, `system/`, `kde/`
+Spec: [0001](../specs/0001-repo-layout-linking/index.md), AC-16 detailed in [0011](../specs/0011-claude-config-submodule/index.md) (Proposed), code in `dot`, `deny.list`, `hooks/`, `profiles/`, `system/`, `kde/`, `claude-config/`
 - [x] Design it (spec): `/architect repo layout and linking method`
 - [ ] Build it: `/develop repo layout and linking method`
   - [x] Deny list, commit hook and profile lists (AC-3, AC-9)
@@ -74,7 +74,12 @@ Spec: [0001](../specs/0001-repo-layout-linking/index.md), code in `dot`, `deny.l
   - [x] System and KDE copy paths, one file each (AC-7, AC-8)
   - [x] README and AGENTS.md layout notes, one time history scan (AC-1, AC-15)
   - [ ] claude-config as a submodule, called by dot install and sync (AC-16), after its branch is merged
+    - [ ] `dot install` and `dot sync` call its scripts, `.config/wf/` deny pattern, move check script, tests (0011 AC-1, AC-3, AC-4, AC-5, AC-7)
+    - [ ] Move `~/claude-config` in when it is on a pushed `main` and no `wf run` is active, then its `install.sh` and `wf allow ~/dotfiles/claude-config` (0011 AC-2, AC-5) · waits on you
+    - [ ] Commit the submodule pointer, server container dry run (0011 AC-2, AC-6)
 - [x] Verify it: `/check verify repo layout and linking method`
+- [ ] Test it: `/test repo layout and linking method`
+- [ ] Sync it: `/sync`
 
 ### 2. Program inventory (done)
 Decide which programs get a config folder, which are left behind, and which go on the install list (every program you actually use, a different and longer list than the configured ones).
@@ -150,29 +155,48 @@ Spec: [0002](../specs/0002-program-inventory/index.md) (scoped git credential he
 Your full KDE setup: look and feel, themes, color schemes, window rules, shortcuts, panels, input, power, Kvantum, panel colorizer, with personal state stripped.
 **Done when:** a fresh KDE session restored from the repo matches your current desktop, and the committed files contain no recent files, accounts or device names.
 Window rules and panel colorizer presets are empty today; panels and wallpaper go to feature 8. Hardware model names in the `Libinput` groups are kept (not personal device names, your call, 2026-10-11).
-Spec: [0004](../specs/0004-kde-settings-keys/index.md), code in `dot`, `kde/allow.list`, `kde/`, `tests/dot-status.sh`
+Spec: [0004](../specs/0004-kde-settings-keys/index.md), fix after the failed real test: [0005](../specs/0005-kde-settings-reference-check/index.md) (Proposed), code in `dot`, `kde/allow.list`, `kde/`, `tests/dot-status.sh`, `tests/kde-shots.sh`, `tests/kde-user.sh`
 - [x] Design it (spec): `/architect KDE settings`
 - [ ] Build it: `/develop KDE settings`
   - [x] `!` lines and the unlisted key check in `dot status`, with tests (AC-2, AC-6, AC-10)
   - [x] Theme apply for color scheme, cursor and icons, with session guard and skipped warnings (AC-3, AC-4, AC-5)
   - [x] Full allow.list, zero unlisted keys, privacy sweep (AC-1, AC-7, AC-8)
   - [x] Shortcuts through D-Bus so the running KWin keeps them (AC-11)
-  - [ ] Throwaway user restore check (AC-9)
+  - [ ] Install writes with `--notify` so GTK follows, with tests (0005 AC-12)
+  - [ ] Screenshot script and throwaway user script in `tests/` (0005 AC-13, AC-9 tooling)
+  - [ ] Take the reference screenshots on your desktop: `tests/kde-shots.sh ~/Pictures/dotfiles-reference/<date>` (0005 AC-14) · waits on you
+  - [ ] Throwaway user restore check, compared scene by scene with the reference (0005 AC-9, AC-15; needs sudo and a Plasma login) · waits on you
 - [ ] Verify it: `/check verify KDE settings`
+- [ ] Test it: `/test KDE settings`
+- [ ] Sync it: `/sync`
 
 ## Slice 6: KDE extras
 
 ### 8. KDE extras
 Mac Dock plasmoid, real-app-icons and its pacman hook, wallpapers, aurorae and color scheme files, in the KDE folder.
 **Done when:** the dock and icon theme install from the repo and the pacman hook rebuilds icons after an update.
+Spec: [0006](../specs/0006-kde-extras/index.md) (Proposed), code in `kde-theme/` (submodule), `dot`, `system/real-app-icons/`, `profiles/desktop`
 - [ ] Build it: `/develop KDE extras`
+  - [ ] Theme repo content: dock, `real-app-icons`, credits, license, pinned `upstream.list`, `install.sh`, panel script (AC-1, AC-2, AC-3, AC-5, AC-7)
+  - [ ] Create `Gartner24/kde-theme` on GitHub and approve its first push · waits on you
+  - [ ] Submodule at `kde-theme/`, `dot install` calls it before KDE keys, `--apply-layout`, hook into `system/real-app-icons/` (AC-1, AC-4, AC-6, AC-7)
+  - [ ] Throwaway user full restore with `--apply-layout`, every scene against the reference, hook rebuilds icons after a `pacman -S` (AC-8; needs sudo and a Plasma login) · waits on you
+- [ ] Verify it: `/check verify KDE extras`
+- [ ] Test it: `/test KDE extras`
+- [ ] Sync it: `/sync`
 
 ## Slice 7: System files
 
 ### 9. System files
 `/etc/keyd` (arrow key fix), `/etc/default/earlyoom`, the pacman hook, the K70 HID-BPF fix and your user systemd units, installed with sudo after showing what changes.
 **Done when:** install shows a diff for each system file before writing it, and after install the arrow key fix, earlyoom and the K70 keyboard work.
+Spec: [0007](../specs/0007-system-files/index.md) (Proposed), code in `system/`, `home/k70-core-fix/`, `home/ghostty/`, `dot`
 - [ ] Build it: `/develop system files`
+  - [ ] K70 source package, build of both objects, the device gated offer with tests, `system/corsair-hid/`, Ghostty override, no state check (AC-3 to AC-9)
+  - [ ] On this hardware: arrow key fix, K70 types without doubles, `sudo bpftool prog show | grep k70_core_debounce`, earlyoom active (needs sudo) · waits on you
+- [ ] Verify it: `/check verify system files`
+- [ ] Test it: `/test system files`
+- [ ] Sync it: `/sync`
 
 ## Slice 8: Package list and bootstrap
 
@@ -181,21 +205,35 @@ Turn the install list from the inventory (programs you actually use, not just th
 **Done when:** install on a new desktop offers every program on the install list, install on a server offers only server items, and sync flags programs installed since the list was last reviewed.
 Spec: [0002](../specs/0002-program-inventory/index.md) (the install list and its Follow-up: yay first, Plasma without `discover`), [0003](../specs/0003-server-profile.md) (the server mapping table and its Follow-up: full Oh My Zsh only on desktop, sparse `omz-git` checkout on servers, `chsh` to zsh)
 The Inter font and `kvantum` must be on the desktop list (spec 0004 Follow-up). The gh credential helper is hardcoded to `/usr/bin/gh`; where gh comes from mise (Ubuntu 22.04), use `!gh auth git-credential` from PATH.
+Spec: [0008](../specs/0008-package-list-bootstrap/index.md) (Proposed), code in `packages/`, `dot`, `home/git/.gitconfig`, `tests/packages.sh`, `tests/server-profile.sh`
 - [ ] Build it: `/develop package list and bootstrap`
+  - [ ] `packages/` files with the coverage check at 0, `dot bootstrap` for Arch and apt, shell and services, unreviewed check, gh helper, container tests (AC-1 to AC-10)
+  - [ ] Read the plan from `./dot bootstrap desktop -n` on this desktop; a real desktop bootstrap on a new machine or VM · waits on you
+- [ ] Verify it: `/check verify package list and bootstrap`
+- [ ] Test it: `/test package list and bootstrap`
+- [ ] Sync it: `/sync`
 
 ## Slice 9: README and architecture docs
 
 ### 11. README and architecture docs
 A README that matches the new layout: what is included, how to install, how to sync, how to add a program.
 **Done when:** every folder in the repo is described and the install and sync steps in the README work as written.
+Spec: [0009](../specs/0009-readme-architecture/index.md) (Proposed), code in `README.md`, `docs/architecture.md`, `AGENTS.md`, `tests/readme.sh`, `tests/server-profile.sh`
 - [ ] Build it: `/develop README and architecture docs`
+- [ ] Verify it: `/check verify README and architecture docs`
+- [ ] Test it: `/test README and architecture docs`
+- [ ] Sync it: `/sync`
 
 ## Slice 10: Retire the old scripts
 
 ### 12. Retire the old scripts
 Remove the old `install.sh` and `sync-to-github.sh`, the Ubuntu path and NVM install, once the new scripts cover everything.
 **Done when:** the old scripts are gone and nothing in the repo or README points to them.
+Spec: [0010](../specs/0010-retire-old-scripts/index.md) (Proposed), code in `install.sh`, `sync-to-github.sh` (deleted), `tests/readme.sh`
 - [ ] Build it: `/develop retire the old scripts`
+- [ ] Verify it: `/check verify retire the old scripts`
+- [ ] Test it: `/test retire the old scripts`
+- [ ] Sync it: `/sync`
 
 ## Deferred
 Out of scope for the current build pass, kept so the plan stays honest.
