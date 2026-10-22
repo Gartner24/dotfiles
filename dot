@@ -75,6 +75,24 @@ link_dest() {
   realpath -m -s -- "$t"
 }
 
+# Folders, relative to ~, that held a file since deleted from a package (committed or not),
+# in this repo and in submodules under home/. stow never revisits a folder that left the
+# package, so its links stay behind; status scans these to report them.
+# ponytail: only deletions git saw, a file linked and removed without ever being committed is missed.
+gone_dirs() {
+  local sub pre
+  {
+    { git -C "$REPO" log --no-renames --diff-filter=D --name-only --format= -- home
+      git -C "$REPO" ls-files -d -- home; } | sed -n 's|^home/[^/]*/||p'
+    while IFS= read -r sub; do
+      [[ $sub == home/*/* && -e $REPO/$sub/.git ]] || continue
+      pre=${sub#home/*/}
+      { git -C "$REPO/$sub" log --no-renames --diff-filter=D --name-only --format=
+        git -C "$REPO/$sub" ls-files -d; } | sed "/^$/d; s|^|$pre/|"
+    done < <(submodule_paths)
+  } 2>/dev/null | sed 's|[^/]*$||; s|/$||' | sort -u
+}
+
 # Old layout: a link into this repo but outside home/. Replaced without a backup.
 is_old_link() { [[ -L $1 ]] && local d && d=$(link_dest "$1") && [[ $d == "$REPO"/* && $d != "$REPO"/home/* ]]; }
 
@@ -168,15 +186,50 @@ sync_system() {
 
 # --- KDE keys (read and written one key at a time, never linked) ----------------
 
-# allow.list lines as rcfile<TAB>group<TAB>key; quotes group words with spaces.
-kde_keys() {
-  local line
+# allow.list lines as kind<TAB>rcfile<TAB>group<TAB>key; quotes group words with spaces.
+# kind is + for a kept key, ! for a left out key or (empty key) a whole group (spec 0004, AC-2).
+kde_lines() {
+  local line kind
   local -a f
   [[ -f $REPO/kde/allow.list ]] || return 0
   grep -vE '^[[:space:]]*(#|$)' "$REPO/kde/allow.list" | while IFS= read -r line; do
-    mapfile -t f < <(xargs printf '%s\n' <<<"$line")
-    if ((${#f[@]} != 3)); then echo "dot: bad kde/allow.list line: $line" >&2; continue; fi
-    printf '%s\t%s\t%s\n' "${f[@]}"
+    kind=+
+    [[ $line == '!'* ]] && kind='!'
+    mapfile -t f < <(xargs printf '%s\n' <<<"${line#!}")
+    if [[ ${#f[@]} != 3 && ! ($kind == '!' && ${#f[@]} == 2) ]]; then
+      echo "dot: bad kde/allow.list line: $line" >&2; continue
+    fi
+    printf '%s\t%s\t%s\t%s\n' "$kind" "${f[0]}" "${f[1]}" "${f[2]:-}"
+  done
+}
+# A ! line never causes a read or a write; only the unlisted key check sees it.
+kde_keys() { kde_lines | sed -n 's/^+\t//p'; }
+kde_ignores() { kde_lines | sed -n 's/^!\t//p'; }
+
+# Keys present in a live rc file as group<TAB>key, groups [A][B] as A/B (spec 0004, AC-6).
+# A kglobalshortcutsrc key counts only when its shortcut (field 1) differs from the default (field 2).
+rc_keys() {
+  awk -v sc="$([[ $1 == kglobalshortcutsrc ]] && echo 1)" '
+    /^[[:space:]]*(#|$)/ { next }
+    /^\[/ { g = $0; sub(/(\[\$[a-z]+\])+$/, "", g); sub(/^\[/, "", g); sub(/\]$/, "", g); gsub(/\]\[/, "/", g); next }
+    g == "" || !index($0, "=") { next }
+    {
+      k = substr($0, 1, index($0, "=") - 1); v = substr($0, index($0, "=") + 1)
+      sub(/^[[:space:]]+/, "", k); sub(/[[:space:]]+$/, "", k); sub(/\[\$[a-z]+\]$/, "", k)
+      if (sc) { if (k == "_k_friendly_name") next; gsub(/\\,/, "\001", v); split(v, f, ","); if (f[1] == f[2]) next }
+      print g "\t" k
+    }' "$2"
+}
+
+# kde_ignored RC GROUP KEY: a ! line names the key, its group, or a parent group.
+# Reads skip[] from cmd_status (keys rc<TAB>group<TAB>key, key empty for a whole group).
+kde_ignored() {
+  local g=$2
+  [[ -n ${skip[$1$'\t'$2$'\t'$3]:-} ]] && return 0
+  while :; do
+    [[ -n ${skip[$1$'\t'$g$'\t']:-} ]] && return 0
+    [[ $g == */* ]] || return 1
+    g=${g%/*}
   done
 }
 
@@ -192,18 +245,113 @@ kcfg() {
   fi
 }
 
+# Theme picks KDE expands into other keys: restored by KDE's own tool, never by a plain
+# write, and after every plain key (spec 0004, AC-3). Never plasma-apply-lookandfeel (AC-5).
+declare -A KDE_APPLY=(
+  [kdeglobals$'\t'General$'\t'ColorScheme]=colorscheme
+  [kcminputrc$'\t'Mouse$'\t'cursorTheme]=cursortheme
+  [kdeglobals$'\t'Icons$'\t'Theme]=icons
+)
+
+theme_installed() { # what value
+  case $1 in
+    colorscheme) plasma-apply-colorscheme --list-schemes 2>/dev/null | sed 's/^ \* //; s/ (current.*)$//' | grep -qxF -- "$2" ;;
+    # lines read " * Display Name [id]"; the key holds the id
+    cursortheme) plasma-apply-cursortheme --list-themes 2>/dev/null | grep -qF -- "[$2]" ;;
+    icons) [[ -d $HOME/.local/share/icons/$2 || -d /usr/share/icons/$2 ]] ;;
+    decoration) [[ -d $HOME/.local/share/aurorae/themes/${2#__aurorae__svg__} || -d /usr/share/aurorae/themes/${2#__aurorae__svg__} ]] ;;
+  esac
+}
+
+apply_theme() { # what value
+  case $1 in
+    colorscheme) plasma-apply-colorscheme "$2" ;;
+    cursortheme) plasma-apply-cursortheme "$2" ;;
+    icons) /usr/lib/plasma-changeicons "$2" ;;   # Arch path; the desktop profile is Arch only
+  esac
+}
+
+# Qt key codes for a kglobalshortcutsrc value's first field, space separated; nothing for
+# none (spec 0004, AC-11). Fails on a key name not in the table.
+# ponytail: no key names with a comma or plus (Ctrl+, Ctrl++), they fail and get the by hand warning.
+qt_keys() {
+  local s p k c code
+  local -a shortcuts parts out=()
+  local -A mods=([Meta]=0x10000000 [Ctrl]=0x04000000 [Alt]=0x08000000 [Shift]=0x02000000)
+  local -A keys=([Esc]=0x01000000 [Tab]=0x01000001 [Return]=0x01000004 [Ins]=0x01000006 [Del]=0x01000007
+    [Print]=0x01000009 [Home]=0x01000010 [End]=0x01000011 [Left]=0x01000012 [Up]=0x01000013
+    [Right]=0x01000014 [Down]=0x01000015 [PgUp]=0x01000016 [PgDown]=0x01000017 [Space]=0x20)
+  s=${1%%,*}
+  [[ $s == none ]] && return 0
+  IFS=$'\t' read -ra shortcuts <<<"$s"
+  for s in "${shortcuts[@]}"; do
+    IFS=+ read -ra parts <<<"$s"
+    k=${parts[-1]} code=0
+    unset 'parts[-1]'
+    for p in "${parts[@]}"; do [[ -n ${mods[$p]:-} ]] || return 1; ((code |= mods[$p])); done
+    if [[ -n ${keys[$k]:-} ]]; then ((code |= keys[$k]))
+    elif [[ $k =~ ^F([1-9]|1[0-2])$ ]]; then ((code |= 0x01000030 + BASH_REMATCH[1] - 1))
+    elif [[ $k =~ ^[A-Za-z0-9]$ ]]; then printf -v c '%d' "'${k^^}"; ((code |= c))
+    else return 1
+    fi
+    out+=("$code")
+  done
+  echo "${out[*]}"
+}
+
+# The running shortcut service (inside KWin on Wayland) keeps every shortcut in memory and
+# writes it back over kglobalshortcutsrc, so a file write alone is lost (spec 0004, AC-11).
+set_shortcut() { # group key value
+  local comp=${1##*/} codes got want
+  local -a c
+  if ! codes=$(qt_keys "$3"); then echo "kde: shortcut $1 $2 did not take, set it in System Settings"; return; fi
+  if ((DRY)); then echo "kde     shortcut $1 $2 would set ${codes:-none}"; return; fi
+  [[ $(busctl --user call org.freedesktop.DBus / org.freedesktop.DBus NameHasOwner s org.kde.kglobalaccel 2>/dev/null) == "b true" ]] || return 0
+  read -ra c <<<"$codes"
+  busctl --user call org.kde.kglobalaccel /kglobalaccel org.kde.KGlobalAccel setForeignShortcut asai \
+    4 "$comp" "$2" "" "" "${#c[@]}" "${c[@]}" >/dev/null 2>&1
+  got=$(busctl --user call org.kde.kglobalaccel /kglobalaccel org.kde.KGlobalAccel shortcut as 4 "$comp" "$2" "" "" 2>/dev/null)
+  want="ai ${#c[@]}${codes:+ $codes}"
+  # KWin reports none both as an empty list and as a single 0
+  [[ $got == "$want" || (-z $codes && $got == "ai 1 0") ]] || echo "kde: shortcut $1 $2 did not take, set it in System Settings"
+}
+
 install_kde() {
-  local rc grp key rv lv n=0
+  local rc grp key rv lv what deco a n=0 warned=0
+  local -a apply=()
+  deco=$(kcfg read "$REPO/kde/kwinrc" org.kde.kdecoration2 theme)
   while IFS=$'\t' read -r rc grp key; do
     rv=$(kcfg read "$REPO/kde/$rc" "$grp" "$key")
     [[ $rv == "$ABSENT" ]] && continue
     lv=$(kcfg read "$rc" "$grp" "$key")
     [[ $lv == "$rv" ]] && continue
-    if ((DRY)); then echo "kde     $rc [$grp] $key would change"; continue; fi
+    what=${KDE_APPLY[$rc$'\t'$grp$'\t'$key]:-}
+    if [[ -n $what ]]; then apply+=("$what"$'\t'"$rv"); continue; fi
+    # an Aurorae decoration whose theme folder is missing would leave KWin without title bars
+    if [[ $rc == kwinrc && $grp == org.kde.kdecoration2 && ($key == library || $key == theme) && $deco == __aurorae__svg__* ]] &&
+      ! theme_installed decoration "$deco"; then
+      ((warned++)) || echo "kde: decoration theme $deco is not installed, skipped"
+      continue
+    fi
+    if ((DRY)); then
+      echo "kde     $rc [$grp] $key would change"
+      [[ $rc == kglobalshortcutsrc ]] && set_shortcut "$grp" "$key" "$rv"
+      continue
+    fi
     kcfg write "$rc" "$grp" "$key" "$rv" || die "could not write $rc [$grp] $key"
+    [[ $rc == kglobalshortcutsrc ]] && set_shortcut "$grp" "$key" "$rv"
     ((n++))
   done < <(kde_keys)
   ((n)) && echo "kde: wrote $n key(s). Log out and back in, or the running session may write the old values back."
+
+  ((${#apply[@]})) || return 0
+  if [[ -z ${WAYLAND_DISPLAY:-}${DISPLAY:-} ]]; then echo "kde: theme apply needs a Plasma session, skipped"; return 0; fi
+  for a in "${apply[@]}"; do
+    what=${a%%$'\t'*} rv=${a#*$'\t'}
+    if ! theme_installed "$what" "$rv"; then echo "kde: $what theme $rv is not installed, skipped"; continue; fi
+    if ((DRY)); then echo "kde     apply $what $rv would run"; continue; fi
+    apply_theme "$what" "$rv" || die "could not apply $what $rv"
+  done
 }
 
 sync_kde() {
@@ -218,10 +366,11 @@ sync_kde() {
     fresh[$rc]=1
     v=$(kcfg read "$rc" "$grp" "$key")
     if [[ $v == "$ABSENT" ]]; then echo "kde: $rc [$grp] $key is not set on this machine, skipped"; continue; fi
-    kcfg write "$KDE_TMP/$rc" "$grp" "$key" "$v" || die "could not write kde/$rc"
+    mkdir -p "$(dirname "$KDE_TMP/$rc")" && kcfg write "$KDE_TMP/$rc" "$grp" "$key" "$v" || die "could not write kde/$rc"
   done < <(kde_keys)
   for rc in "${!fresh[@]}"; do
-    if [[ -f $KDE_TMP/$rc ]]; then mv -f -- "$KDE_TMP/$rc" "$REPO/kde/$rc" || die "could not replace kde/$rc"
+    if [[ -f $KDE_TMP/$rc ]]; then
+      mkdir -p "$(dirname "$REPO/kde/$rc")" && mv -f -- "$KDE_TMP/$rc" "$REPO/kde/$rc" || die "could not replace kde/$rc"
     else rm -f -- "$REPO/kde/$rc"
     fi
   done
@@ -278,7 +427,7 @@ cmd_status() {
   resolve_profile ""
   local problems=0 pkg rel total linked l d owner n rc grp key name src dst
   local -a dirs files=()
-  local -A inprof=()
+  local -A inprof=() keep=() skip=() tracked=()
 
   for pkg in "${PKGS[@]}"; do inprof[$pkg]=1; done
   for n in "${BAD[@]}"; do echo "profile: '$n' has no folder under home/ or system/ and is no submodule"; ((problems++)); done
@@ -304,9 +453,10 @@ cmd_status() {
   while IFS= read -r rel; do echo "package: ~/$rel is in more than one package"; ((problems++)); done < <(
     for pkg in "$REPO"/home/*/; do [[ -d $pkg ]] && pkg_files "$(basename "$pkg")"; done | sort | uniq -d)
 
-  # links into the repo: look in ~ and in every folder any package mirrors
+  # links into the repo: look in ~, in every folder any package mirrors, and in folders that left one
   mapfile -t dirs < <({ echo; for pkg in "$REPO"/home/*/; do
-    [[ -d $pkg ]] && (cd "$pkg" && find . -mindepth 1 -type d -not -path '*/.git/*' -not -name .git -printf '%P\n'); done; } | sort -u)
+    [[ -d $pkg ]] && (cd "$pkg" && find . -mindepth 1 -type d -not -path '*/.git/*' -not -name .git -printf '%P\n'); done
+    gone_dirs; } | sort -u)
   while IFS= read -r l; do
     d=$(link_dest "$l")
     [[ $d == "$REPO"/* ]] || continue
@@ -329,9 +479,25 @@ cmd_status() {
 
   if [[ $PROFILE == desktop ]]; then
     while IFS=$'\t' read -r rc grp key; do
+      keep[$rc$'\t'$grp$'\t'$key]=1 tracked[$rc]=1
       [[ $(kcfg read "$REPO/kde/$rc" "$grp" "$key") == "$(kcfg read "$rc" "$grp" "$key")" ]] && continue
       echo "kde: $rc [$grp] $key differs from the repo"; ((problems++))
     done < <(kde_keys)
+    while IFS= read -r n; do skip[$n]=1; done < <(kde_ignores)
+    for n in "${!keep[@]}"; do
+      IFS=$'\t' read -r rc grp key <<<"$n"
+      kde_ignored "$rc" "$grp" "$key" || continue
+      echo "dot: allow.list covers $rc [$grp] $key twice"; ((problems++))
+    done
+    # every key in a tracked file must be kept or left out on purpose (spec 0004, AC-6)
+    for rc in "${!tracked[@]}"; do
+      src=${XDG_CONFIG_HOME:-$HOME/.config}/$rc
+      [[ -f $src ]] || continue
+      while IFS=$'\t' read -r grp key; do
+        [[ -n ${keep[$rc$'\t'$grp$'\t'$key]:-} ]] || kde_ignored "$rc" "$grp" "$key" && continue
+        echo "kde: $rc [$grp] $key is not in allow.list"; ((problems++))
+      done < <(rc_keys "$rc" "$src")
+    done
   fi
 
   ((problems)) && { echo "$problems problem(s)"; return 1; }

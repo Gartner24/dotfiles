@@ -2,7 +2,13 @@
 # or a submodule at the repo root. The desktop profile installs everything here too.
 # A name may appear in only one of the two lists.
 
-# .zshrc and .p10k.zsh (Oh My Zsh and its plugins are installed by install.sh)
+# .zshrc (Oh My Zsh and its plugins are installed by install.sh)
 zsh
+# prompt, replaced p10k (feature 14)
+starship
 # Neovim config, a submodule of Gartner24/nvim.lua inside the package
 nvim
+# .gitconfig (store helper only for gitlab.freedesktop.org) and the global ignore
+git
+# mise global tools (node 24)
+mise

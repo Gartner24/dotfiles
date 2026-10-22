@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+# MCP launcher for SearXNG: starts the container on demand, stops it when the
+# last Claude session using it exits. Claude Code runs this as the searxng MCP.
+export SEARXNG_URL=http://localhost:8888
+
+docker start searxng >/dev/null 2>&1
+for _ in $(seq 20); do
+  curl -sf -o /dev/null "$SEARXNG_URL/healthz" && break
+  sleep 0.5
+done
+
+cleanup() {
+  kill "$child" 2>/dev/null; wait "$child" 2>/dev/null
+  # last session out stops the container (other sessions still run their own mcp-searxng)
+  # ponytail: a session killed with SIGKILL skips this and leaves it running until the next clean exit, harmless
+  pgrep -f 'mcp-searxng' >/dev/null || docker stop searxng >/dev/null 2>&1
+  exit 0
+}
+trap cleanup TERM INT HUP
+
+# <&0: a backgrounded child otherwise gets /dev/null as stdin and the MCP pipe closes
+npx -y mcp-searxng <&0 &
+child=$!
+wait "$child"
+cleanup

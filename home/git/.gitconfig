@@ -1,0 +1,26 @@
+[credential "https://github.com"]
+	helper =
+	helper = !/usr/bin/gh auth git-credential
+[credential "https://gist.github.com"]
+	helper =
+	helper = !/usr/bin/gh auth git-credential
+# plaintext store only for this host (spec 0002 AC-7); ~/.git-credentials stays untracked
+[credential "https://gitlab.freedesktop.org"]
+	helper = store
+[user]
+	email = santiagovalencialeon@gmail.com
+	name = gartner24
+[url "git@github.com:"]
+	insteadOf = https://github.com/
+[core]
+	editor = nvim
+	pager = delta
+	# refuses Claude attribution in every repo, then runs the repo's own hook (hooks/commit-msg there)
+	hooksPath = ~/.config/git/hooks
+[interactive]
+	diffFilter = delta --color-only
+[delta]
+	navigate = true
+	line-numbers = true
+[merge]
+	conflictStyle = zdiff3

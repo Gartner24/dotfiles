@@ -1,3 +1,10 @@
 [kwin]
 Window Maximize=Meta+Up\tMeta+PgUp,Meta+PgUp,Maximize Window
 Window Quick Tile Top=none,Meta+Up,Quick Tile Window to the Top
+
+[plasmashell]
+previous activity=Meta+Shift+A,none,Walk through activities (Reverse)
+
+[services][org.kde.spectacle.desktop]
+CurrentMonitorScreenShot=none
+OpenWithoutScreenshot=none

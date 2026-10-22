@@ -208,10 +208,10 @@ This feature produces lists, not code; features 4, 5, 6, 9 and 10 build from the
 
 ## Follow-up
 
-- [ ] Scope: update feature 6's row (git, mise, tealdeer, yt-dlp, easyeffects) and link features 5, 6 and 10 to this spec.
+- [x] Scope: update feature 6's row (git, mise, tealdeer, yt-dlp, easyeffects) and link features 5, 6 and 10 to this spec.
 - [ ] Feature 6: remove the `zed='zeditor'` alias from `home/zsh/.zshrc` (Zed was removed on purpose).
 - [ ] Feature 10: install `yay` before AUR entries, and remove the downloaded `cloudflared`, `stripe`, `uv`, `uvx`, `git-filter-repo` from `~/.local/bin` once the packages are in.
 - [ ] Feature 10: install Plasma without `discover` and `plasma-systemmonitor` (for example the `plasma` group minus those two, or remove them right after `plasma-meta`); `discover` was removed on purpose on 2026-08-07.
 - [ ] Feature 10: on this machine, drop the pacman `yt-dlp`, the pipx `numpy` and the dropped KDE apps only when you choose to (this spec changes no installed package).
-- [ ] Feature 13: map the server list to package names on the chosen server distros (`starship`, `mise`, `eza`, `difftastic` are not in every distro's repos).
+- [x] Feature 13: map the server list to package names on the chosen server distros (`starship`, `mise`, `eza`, `difftastic` are not in every distro's repos).
 - [ ] claude-config: confirm its installer covers the items listed as its own.

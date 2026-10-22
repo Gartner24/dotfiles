@@ -174,8 +174,7 @@ if [ "$SYNC_ONLY" = false ]; then
   fi
 
   ZSH_CUSTOM="${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}"
-  info "Installing Zsh plugins and theme..."
-  git clone --depth=1 https://github.com/romkatv/powerlevel10k.git     "$ZSH_CUSTOM/themes/powerlevel10k"              2>/dev/null || true
+  info "Installing Zsh plugins..."
   git clone https://github.com/zsh-users/zsh-autosuggestions            "$ZSH_CUSTOM/plugins/zsh-autosuggestions"       2>/dev/null || true
   git clone https://github.com/zsh-users/zsh-syntax-highlighting.git    "$ZSH_CUSTOM/plugins/zsh-syntax-highlighting"   2>/dev/null || true
   git clone https://github.com/zsh-users/zsh-completions                "$ZSH_CUSTOM/plugins/zsh-completions"           2>/dev/null || true

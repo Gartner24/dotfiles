@@ -1,0 +1,13 @@
+[AC][Keyboard]
+KeyboardBrightness=100
+UseProfileSpecificKeyboardBrightness=true
+
+[AC][SuspendAndShutdown]
+AutoSuspendIdleTimeoutSec=1800
+
+[Battery][SuspendAndShutdown]
+AutoSuspendIdleTimeoutSec=300
+PowerButtonAction=1
+
+[General]
+pausePlayersOnSuspend=false

@@ -1,3 +1,6 @@
 [submodule ".config/nvim"]
 	path = home/nvim/.config/nvim
 	url = https://github.com/Gartner24/nvim.lua
+[submodule "claude-config"]
+	path = claude-config
+	url = git@github.com:Gartner24/claude-config.git

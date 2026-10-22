@@ -4,9 +4,17 @@
 # arrow key fix for this laptop (system/keyd -> /etc/keyd)
 keyd
 
+# Oh My Zsh and the desktop half of the shell, sourced from .zshrc's conf.d loops (spec 0003)
+zsh-desktop
+
 # terminals; tmux stays off servers (scope decision 2026-10-11)
 tmux
 ghostty
 alacritty
 # desktop only scripts (tmux-zen for now, the rest come with feature 5)
 bin-desktop
+
+# CLI tools used only on the desktop (feature 6); easyeffectsrc stays out, it is window state
+tealdeer
+yt-dlp
+easyeffects

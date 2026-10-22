@@ -1,0 +1,16 @@
+[Libinput][1133][16531][Logitech PRO X]
+NaturalScroll=false
+PointerAcceleration=0.000
+PointerAccelerationProfile=1
+ScrollMethod=0
+
+[Libinput][2362][12310][ASCP1200:00 093A:3016 Mouse]
+PointerAccelerationProfile=1
+
+[Libinput][2362][12310][ASCP1200:00 093A:3016 Touchpad]
+MiddleButtonEmulation=true
+NaturalScroll=true
+ScrollFactor=0.3
+
+[Mouse]
+cursorTheme=WhiteSur-cursors

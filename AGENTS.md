@@ -1,11 +1,11 @@
 # dotfiles
 
 Personal Linux config with two profiles: desktop (Arch, KDE Plasma 6 on Wayland) and a lean
-headless server profile (planned, see `docs/scope/scope.md`). `install.sh` still has an old Ubuntu/WSL path. Public repo: `github.com/Gartner24/dotfiles`.
+headless server profile for Arch, Debian 12+ and Ubuntu 22.04+ (spec 0003; its package install comes with feature 10, see `docs/scope/scope.md`). `install.sh` still has an old Ubuntu/WSL path. Public repo: `github.com/Gartner24/dotfiles`.
 
 ## Stack
 
-- **Language / Runtime**: zsh (Oh My Zsh + Powerlevel10k), bash for scripts, QML for the KDE plasmoid
+- **Language / Runtime**: zsh (Oh My Zsh + Starship prompt), bash for scripts, QML for the KDE plasmoid
 - **Framework**: none; plain files symlinked into `$HOME`
 - **Key dependencies**: Oh My Zsh, tmux, Ghostty, Alacritty, Neovim, mise, zoxide, fzf, fd, eza, bat, yazi
 - **Package manager**: pacman + yay (Arch), apt (Ubuntu); no project manifest
@@ -32,7 +32,19 @@ Tracer Bullet (move one program all the way through the new layout, install and 
 zsh -n home/zsh/.zshrc
 ```
 
-No tests or CI.
+```bash
+# Test dot against a throwaway repo and HOME (touches nothing real)
+tests/dot-status.sh
+
+# Global git hooks: Claude attribution refused, each repo's own hooks still run (throwaway repos)
+tests/global-hooks.sh
+
+# Server profile in archlinux, debian:12/13, ubuntu:22.04/24.04/26.04 containers
+# (needs docker and network; exits 2 without docker; one image: tests/server-profile.sh debian:12)
+tests/server-profile.sh
+```
+
+No CI.
 
 ## Rules
 
@@ -49,12 +61,16 @@ No tests or CI.
 - The repo is public: never commit keys, tokens, `~/.config/claude-fb/keys.env`, history files,
   or machine state (caches, window positions, recent files).
 - Comments in `home/zsh/.zshrc` explain why a setting exists (often a past failure); keep that style.
+- `home/zsh/.zshrc` is shared with servers (spec 0003): no desktop programs, GUI variables or
+  `/home/santiago` paths in it. Desktop shell config goes in `home/zsh-desktop/.config/zsh/conf.d/desktop.zsh`
+  (Oh My Zsh only in `conf.d/early/omz.zsh`), and an alias is set only when its tool is on PATH.
+  After moving shell config, compare the full `alias`, `functions` and `print -l $path` output before and after.
 - Shell functions that touch the system ask before destructive steps (`read -q`), see `wtclean`, `freeram`.
 - `kde/real-app-icons.hook` installs to `/etc/pacman.d/hooks/` with sudo (Arch only).
 
 ## Gotchas
 
-- `~/.zshrc` and `~/.p10k.zsh` link to `home/zsh/`; editing either edits the repo. Oh My Zsh and its plugins are not in the repo (`install.sh` clones them).
+- `~/.zshrc` links to `home/zsh/` and `~/.config/starship.toml` to `home/starship/`; editing either edits the repo. Oh My Zsh and its plugins are not in the repo (`install.sh` clones them).
 - `sync-to-github.sh` runs `git add .` and pushes: anything untracked in the repo gets published.
 - `install.sh` still installs NVM, but `.zshrc` moved to mise; README only lists nvim, zsh and tmux.
 

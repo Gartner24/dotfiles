@@ -1,0 +1,23 @@
+#!/bin/sh
+# Global git hooks, on through core.hooksPath in home/git/.gitconfig. Every other hook name in
+# this folder is a link to this file. A global hooksPath makes git skip each repo's .git/hooks,
+# which would silence claude-config's private names hooks, so after our own check this always
+# runs the repo's hook of the same name, with the same args and stdin, and keeps its exit code.
+# Tested by tests/global-hooks.sh.
+name=${0##*/}
+
+if [ "$name" = commit-msg ]; then
+  # No Claude attribution in any commit (~/.claude/rules/no-attribution.md): installed skills
+  # still ask for the trailer. Comment lines and the commit -v diff below the scissors are
+  # not part of the message. A missing sed or grep matches nothing, so it never blocks.
+  if sed -e '/^# -* >8 -*$/,$d' -e '/^#/d' "$1" 2>/dev/null |
+    grep -qiE '^[[:space:]]*co-authored-by:.*(claude|anthropic)|noreply@anthropic\.com|generated with.*claude code|claude\.ai/code/session'; then
+    echo "commit-msg: Claude attribution in the message, refused (rule: ~/.claude/rules/no-attribution.md)" >&2
+    exit 1
+  fi
+fi
+
+# --git-common-dir, not --git-dir: a linked worktree keeps its hooks in the main .git
+hook=$(git rev-parse --git-common-dir 2>/dev/null)/hooks/$name
+[ -x "$hook" ] || exit 0
+exec "$hook" "$@"
