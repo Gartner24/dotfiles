@@ -24,6 +24,8 @@ system/<name>/...   files outside home (system/keyd/etc/keyd/default.conf), copi
 kde/allow.list      KDE keys to keep: <rcfile> <Group> <Key>
 kde/<rcfile>        only those keys, read from and written back to the live file
 hooks/pre-commit    refuses a commit that adds a deny.list match
+hooks/commit-msg    link to the global commit-msg hook (this repo's local hooksPath skips the global one)
+home/git/.config/git/hooks/  global hooks (core.hooksPath): refuse Claude attribution, then run the repo's own hook
 docs/               scope and specs, never linked
 ```
 
