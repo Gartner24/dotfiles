@@ -17,31 +17,13 @@ Tracer Bullet (move one program all the way through the new layout, install and 
 ## Commands
 
 ```bash
-# Install on a new machine (deps, Oh My Zsh, symlinks, nvim clone)
-./install.sh            # --os=arch|ubuntu, --gui, --sync (submodules + symlinks only)
-
-# Copy changed configs from $HOME into the repo, commit and push
-./sync-to-github.sh
-
-# New layout: link, report, sync (see README "Layout")
-./dot install desktop -n   # dry run; then without -n
-./dot status
-./dot sync                 # scoped staging, asks before new files and before push
-
-# Check shell config after editing
-zsh -n home/zsh/.zshrc
-```
-
-```bash
-# Test dot against a throwaway repo and HOME (touches nothing real)
-tests/dot-status.sh
-
-# Global git hooks: Claude attribution refused, each repo's own hooks still run (throwaway repos)
-tests/global-hooks.sh
-
-# Server profile in archlinux, debian:12/13, ubuntu:22.04/24.04/26.04 containers
-# (needs docker and network; exits 2 without docker; one image: tests/server-profile.sh debian:12)
-tests/server-profile.sh
+./install.sh                # new machine; --os=arch|ubuntu, --gui, --sync (submodules + symlinks only)
+./sync-to-github.sh         # copy changed configs from $HOME into the repo, commit, push
+./dot install desktop -n    # dry run; then without -n. Also ./dot status, ./dot sync (asks before new files and push)
+zsh -n home/zsh/.zshrc      # check shell config after editing
+tests/dot-status.sh         # throwaway repo and HOME
+tests/global-hooks.sh       # throwaway repos
+tests/server-profile.sh [image]   # docker containers; exits 2 without docker
 ```
 
 No CI.
@@ -70,9 +52,8 @@ No CI.
 
 ## Gotchas
 
-- `~/.zshrc` links to `home/zsh/` and `~/.config/starship.toml` to `home/starship/`; editing either edits the repo. Oh My Zsh and its plugins are not in the repo (`install.sh` clones them).
-- `sync-to-github.sh` runs `git add .` and pushes: anything untracked in the repo gets published.
-- `install.sh` still installs NVM, but `.zshrc` moved to mise; README only lists nvim, zsh and tmux.
+- `~/.zshrc` and `~/.config/starship.toml` link into `home/`; editing either edits the repo. Oh My Zsh and its plugins are not in the repo.
+- `sync-to-github.sh` runs `git add .` and pushes: anything untracked gets published.
 
 ## Agent skills
 
