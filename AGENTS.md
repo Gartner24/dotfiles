@@ -36,6 +36,9 @@ zsh -n home/zsh/.zshrc
 # Test dot against a throwaway repo and HOME (touches nothing real)
 tests/dot-status.sh
 
+# Global git hooks: Claude attribution refused, each repo's own hooks still run (throwaway repos)
+tests/global-hooks.sh
+
 # Server profile in archlinux, debian:12/13, ubuntu:22.04/24.04/26.04 containers
 # (needs docker and network; exits 2 without docker; one image: tests/server-profile.sh debian:12)
 tests/server-profile.sh
