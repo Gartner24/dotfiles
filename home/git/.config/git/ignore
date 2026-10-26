@@ -4,3 +4,6 @@ jjstack/
 .superpowers/
 .design/run*.json
 .workflow/
+
+**/.claude/.cc-writes/
+graphify-out/
